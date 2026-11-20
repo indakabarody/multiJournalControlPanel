@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE schema SYSTEM "../../../lib/pkp/dtd/xmlSchema.dtd">
+<!--
+  * schema.xml
+  *
+  * Copyright (c) 2026 Indaka Barody
+  * Multi-Journal Control Panel
+  * Developed for Open Journal Systems (OJS) 3.3.x.
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  -->
+<schema version="0.2">
+	<!-- 1. Aggregated Article & Editorial Pipeline Data -->
+	<table name="mjcp_article_data">
+		<field name="article_data_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="journal_path" type="C2" size="64">
+			<NOTNULL/>
+		</field>
+		<field name="journal_name" type="C2" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="article_title" type="X"/>
+		<field name="author_names" type="X"/>
+		<field name="correspondent_email" type="C2" size="255"/>
+		<field name="stage_id" type="I2">
+			<NOTNULL/>
+			<DEFAULT VALUE="1"/>
+		</field>
+		<field name="pipeline_bucket" type="C2" size="32">
+			<NOTNULL/>
+			<DEFAULT VALUE="submission"/>
+		</field>
+		<field name="submission_status" type="I2">
+			<NOTNULL/>
+			<DEFAULT VALUE="1"/>
+		</field>
+		<field name="is_accepted" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="is_declined" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="is_published" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="current_round" type="I2">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="round_status" type="I2"/>
+		<field name="stage_entry_date" type="D"/>
+		<field name="date_submitted" type="T"/>
+		<field name="date_accepted" type="D"/>
+		<field name="date_published" type="D"/>
+		<field name="target_issue_id" type="I8"/>
+		<field name="target_issue_label" type="C2" size="255"/>
+		<field name="target_issue_date" type="D"/>
+		<field name="elapsed_working_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="limit_working_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="overdue_working_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="remaining_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="bottleneck_status" type="C2" size="32">
+			<NOTNULL/>
+			<DEFAULT VALUE="normal"/>
+		</field>
+		<field name="urgency_score" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="loa_status" type="C2" size="32">
+			<NOTNULL/>
+			<DEFAULT VALUE="missing"/>
+		</field>
+		<field name="copyediting_done" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="is_ready_to_publish" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="doi" type="C2" size="255"/>
+		<field name="publication_url" type="C2" size="512"/>
+		<field name="last_synced_at" type="T"/>
+		<index name="mjcp_article_data_sub_uq">
+			<col>submission_id</col>
+			<UNIQUE/>
+		</index>
+		<index name="mjcp_article_data_ctx_idx">
+			<col>context_id</col>
+		</index>
+		<index name="mjcp_article_data_bucket_idx">
+			<col>context_id</col>
+			<col>pipeline_bucket</col>
+		</index>
+		<index name="mjcp_article_data_btl_idx">
+			<col>bottleneck_status</col>
+			<col>urgency_score</col>
+		</index>
+		<index name="mjcp_article_data_issue_idx">
+			<col>context_id</col>
+			<col>target_issue_id</col>
+		</index>
+	</table>
+
+	<!-- 2. Payment Records -->
+	<table name="mjcp_payments">
+		<field name="payment_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="payment_status" type="C2" size="16">
+			<NOTNULL/>
+			<DEFAULT VALUE="unpaid"/>
+		</field>
+		<field name="amount" type="I8">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="notes" type="X"/>
+		<field name="proof_file_path" type="C2" size="512"/>
+		<field name="proof_original_name" type="C2" size="255"/>
+		<field name="proof_mime_type" type="C2" size="128"/>
+		<field name="proof_file_size" type="I4"/>
+		<field name="updated_by" type="I8"/>
+		<field name="updated_at" type="T"/>
+		<field name="created_at" type="T"/>
+		<index name="mjcp_payments_sub_uq">
+			<col>submission_id</col>
+			<UNIQUE/>
+		</index>
+		<index name="mjcp_payments_ctx_status_idx">
+			<col>context_id</col>
+			<col>payment_status</col>
+		</index>
+	</table>
+
+	<!-- 3. Payment Audit Logs -->
+	<table name="mjcp_payment_logs">
+		<field name="payment_log_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="payment_id" type="I8"/>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="old_status" type="C2" size="16"/>
+		<field name="new_status" type="C2" size="16"/>
+		<field name="old_amount" type="I8"/>
+		<field name="new_amount" type="I8"/>
+		<field name="old_notes" type="X"/>
+		<field name="new_notes" type="X"/>
+		<field name="old_proof_file_path" type="C2" size="512"/>
+		<field name="new_proof_file_path" type="C2" size="512"/>
+		<field name="changed_by" type="I8"/>
+		<field name="changed_by_username" type="C2" size="128"/>
+		<field name="changed_at" type="T">
+			<NOTNULL/>
+		</field>
+		<index name="mjcp_payment_logs_sub_idx">
+			<col>submission_id</col>
+		</index>
+		<index name="mjcp_payment_logs_ctx_idx">
+			<col>context_id</col>
+		</index>
+	</table>
+
+	<!-- 4. Author Confirmation Forms -->
+	<table name="mjcp_author_forms">
+		<field name="author_form_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="full_name_authors" type="C2" size="512">
+			<NOTNULL/>
+		</field>
+		<field name="affiliation" type="C2" size="512">
+			<NOTNULL/>
+		</field>
+		<field name="correspondent_email" type="C2" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="whatsapp_number" type="C2" size="64">
+			<NOTNULL/>
+		</field>
+		<field name="transfer_proof_path" type="C2" size="512"/>
+		<field name="transfer_proof_original_name" type="C2" size="255"/>
+		<field name="transfer_proof_mime" type="C2" size="128"/>
+		<field name="transfer_proof_size" type="I4"/>
+		<field name="testimonial" type="X"/>
+		<field name="testimonial_consent" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="1"/>
+		</field>
+		<field name="ip_address_hash" type="C2" size="128"/>
+		<field name="submitted_locale" type="C2" size="16"/>
+		<field name="submitted_at" type="T">
+			<NOTNULL/>
+		</field>
+		<field name="updated_at" type="T"/>
+		<index name="mjcp_author_forms_sub_uq">
+			<col>submission_id</col>
+			<UNIQUE/>
+		</index>
+		<index name="mjcp_author_forms_ctx_idx">
+			<col>context_id</col>
+		</index>
+	</table>
+
+	<!-- 5. Author Secure Tokens -->
+	<table name="mjcp_author_tokens">
+		<field name="token_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="token_hash" type="C2" size="64">
+			<NOTNULL/>
+		</field>
+		<field name="token_display" type="C2" size="128"/>
+		<field name="is_active" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="1"/>
+		</field>
+		<field name="expires_at" type="T"/>
+		<field name="created_by" type="I8"/>
+		<field name="created_at" type="T">
+			<NOTNULL/>
+		</field>
+		<field name="revoked_at" type="T"/>
+		<index name="mjcp_author_tokens_hash_uq">
+			<col>token_hash</col>
+			<UNIQUE/>
+		</index>
+		<index name="mjcp_author_tokens_sub_idx">
+			<col>submission_id</col>
+			<col>is_active</col>
+		</index>
+	</table>
+
+	<!-- 6. LOA Files & History -->
+	<table name="mjcp_loa_files">
+		<field name="loa_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="loa_number" type="C2" size="128">
+			<NOTNULL/>
+		</field>
+		<field name="file_path" type="C2" size="512">
+			<NOTNULL/>
+		</field>
+		<field name="original_filename" type="C2" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="mime_type" type="C2" size="128">
+			<NOTNULL/>
+		</field>
+		<field name="file_size" type="I4">
+			<NOTNULL/>
+		</field>
+		<field name="is_current" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="1"/>
+		</field>
+		<field name="uploaded_by" type="I8"/>
+		<field name="uploaded_by_username" type="C2" size="128"/>
+		<field name="uploaded_at" type="T">
+			<NOTNULL/>
+		</field>
+		<index name="mjcp_loa_files_sub_cur_idx">
+			<col>submission_id</col>
+			<col>is_current</col>
+		</index>
+		<index name="mjcp_loa_files_num_idx">
+			<col>loa_number</col>
+		</index>
+	</table>
+
+	<!-- 7. Issue Quotas -->
+	<table name="mjcp_issue_quotas">
+		<field name="quota_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="issue_id" type="I8">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="quota" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="10"/>
+		</field>
+		<field name="target_date" type="D"/>
+		<field name="updated_by" type="I8"/>
+		<field name="updated_at" type="T"/>
+		<index name="mjcp_issue_quotas_ctx_iss_uq">
+			<col>context_id</col>
+			<col>issue_id</col>
+			<UNIQUE/>
+		</index>
+	</table>
+
+	<!-- 8. Stage Thresholds -->
+	<table name="mjcp_stage_thresholds">
+		<field name="threshold_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="round1_limit_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="21"/>
+		</field>
+		<field name="round2_limit_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="7"/>
+		</field>
+		<field name="round1_warning_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="3"/>
+		</field>
+		<field name="round2_warning_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="2"/>
+		</field>
+		<field name="copyediting_warning_days" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="10"/>
+		</field>
+		<field name="updated_by" type="I8"/>
+		<field name="updated_at" type="T"/>
+		<index name="mjcp_stage_thresholds_ctx_uq">
+			<col>context_id</col>
+			<UNIQUE/>
+		</index>
+	</table>
+
+	<!-- 9. Holiday Calendar -->
+	<table name="mjcp_holidays">
+		<field name="holiday_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="holiday_date" type="D">
+			<NOTNULL/>
+		</field>
+		<field name="description" type="C2" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="created_by" type="I8"/>
+		<field name="created_at" type="T"/>
+		<index name="mjcp_holidays_ctx_date_uq">
+			<col>context_id</col>
+			<col>holiday_date</col>
+			<UNIQUE/>
+		</index>
+	</table>
+
+	<!-- 10. Payment Access Whitelist Users -->
+	<table name="mjcp_access_users">
+		<field name="access_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="user_id" type="I8"/>
+		<field name="username" type="C2" size="128">
+			<NOTNULL/>
+		</field>
+		<field name="access_type" type="C2" size="32">
+			<NOTNULL/>
+			<DEFAULT VALUE="payment_access"/>
+		</field>
+		<field name="is_active" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="1"/>
+		</field>
+		<field name="created_by" type="I8"/>
+		<field name="created_at" type="T"/>
+		<index name="mjcp_access_users_uname_uq">
+			<col>username</col>
+			<col>access_type</col>
+			<UNIQUE/>
+		</index>
+	</table>
+
+	<!-- 11. Plugin Roles Catalog -->
+	<table name="mjcp_roles">
+		<field name="role_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="role_key" type="C2" size="64">
+			<NOTNULL/>
+		</field>
+		<field name="role_name" type="C2" size="128">
+			<NOTNULL/>
+		</field>
+		<field name="description" type="C2" size="255"/>
+		<field name="created_at" type="T"/>
+		<index name="mjcp_roles_key_uq">
+			<col>role_key</col>
+			<UNIQUE/>
+		</index>
+	</table>
+
+	<!-- 12. User Role Assignments -->
+	<table name="mjcp_user_roles">
+		<field name="user_role_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="user_id" type="I8"/>
+		<field name="username" type="C2" size="128">
+			<NOTNULL/>
+		</field>
+		<field name="role_key" type="C2" size="64">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="assigned_by" type="I8"/>
+		<field name="assigned_at" type="T"/>
+		<index name="mjcp_user_roles_u_r_c_uq">
+			<col>username</col>
+			<col>role_key</col>
+			<col>context_id</col>
+			<UNIQUE/>
+		</index>
+		<index name="mjcp_user_roles_uid_idx">
+			<col>user_id</col>
+		</index>
+	</table>
+
+	<!-- 13. General Audit Logs -->
+	<table name="mjcp_audit_logs">
+		<field name="audit_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="submission_id" type="I8"/>
+		<field name="user_id" type="I8"/>
+		<field name="username" type="C2" size="128"/>
+		<field name="action" type="C2" size="128">
+			<NOTNULL/>
+		</field>
+		<field name="entity_type" type="C2" size="64"/>
+		<field name="old_value" type="X"/>
+		<field name="new_value" type="X"/>
+		<field name="ip_address_hash" type="C2" size="128"/>
+		<field name="created_at" type="T">
+			<NOTNULL/>
+		</field>
+		<index name="mjcp_audit_logs_ctx_idx">
+			<col>context_id</col>
+			<col>created_at</col>
+		</index>
+		<index name="mjcp_audit_logs_sub_idx">
+			<col>submission_id</col>
+		</index>
+	</table>
+
+	<!-- 14. Journal Synchronization Logs -->
+	<table name="mjcp_sync_logs">
+		<field name="sync_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="sync_status" type="C2" size="32">
+			<NOTNULL/>
+			<DEFAULT VALUE="connected"/>
+		</field>
+		<field name="sync_mode" type="C2" size="32">
+			<NOTNULL/>
+			<DEFAULT VALUE="scheduled"/>
+		</field>
+		<field name="articles_processed" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="active_count" type="I4">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="error_message" type="X"/>
+		<field name="triggered_by" type="I8"/>
+		<field name="started_at" type="T">
+			<NOTNULL/>
+		</field>
+		<field name="finished_at" type="T"/>
+		<index name="mjcp_sync_logs_ctx_idx">
+			<col>context_id</col>
+			<col>started_at</col>
+		</index>
+	</table>
+
+	<!-- 15. Testimonials -->
+	<table name="mjcp_testimonials">
+		<field name="testimonial_id" type="I8">
+			<KEY/>
+			<AUTOINCREMENT/>
+		</field>
+		<field name="submission_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="context_id" type="I8">
+			<NOTNULL/>
+		</field>
+		<field name="author_name" type="C2" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="institution" type="C2" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="journal_name" type="C2" size="255">
+			<NOTNULL/>
+		</field>
+		<field name="testimonial_text" type="X">
+			<NOTNULL/>
+		</field>
+		<field name="consent_given" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="1"/>
+		</field>
+		<field name="consent_withdrawn" type="I1">
+			<NOTNULL/>
+			<DEFAULT VALUE="0"/>
+		</field>
+		<field name="withdrawn_at" type="T"/>
+		<field name="withdrawn_by" type="I8"/>
+		<field name="submitted_at" type="T">
+			<NOTNULL/>
+		</field>
+		<index name="mjcp_testimonials_sub_uq">
+			<col>submission_id</col>
+			<UNIQUE/>
+		</index>
+		<index name="mjcp_testimonials_ctx_consent_idx">
+			<col>context_id</col>
+			<col>consent_given</col>
+			<col>consent_withdrawn</col>
+		</index>
+	</table>
+</schema>

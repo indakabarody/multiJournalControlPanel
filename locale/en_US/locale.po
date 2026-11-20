@@ -1,0 +1,1069 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Multi-Journal Control Panel 1.0.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: Indaka Barody\n"
+"Language-Team: English\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en_US\n"
+
+msgid "plugins.generic.multiJournalControlPanel.displayName"
+msgstr "Multi-Journal Control Panel"
+
+msgid "plugins.generic.multiJournalControlPanel.description"
+msgstr "Plugin to integrate editorial monitoring, payment management, issue readiness, journal performance, and author self-service into a unified publishing house operational dashboard."
+
+msgid "mjcp.action.openControlPanel"
+msgstr "Open Control Panel"
+
+msgid "mjcp.currency.prefix"
+msgstr "IDR"
+
+msgid "mjcp.month.short.1"
+msgstr "Jan"
+
+msgid "mjcp.month.short.2"
+msgstr "Feb"
+
+msgid "mjcp.month.short.3"
+msgstr "Mar"
+
+msgid "mjcp.month.short.4"
+msgstr "Apr"
+
+msgid "mjcp.month.short.5"
+msgstr "May"
+
+msgid "mjcp.month.short.6"
+msgstr "Jun"
+
+msgid "mjcp.month.short.7"
+msgstr "Jul"
+
+msgid "mjcp.month.short.8"
+msgstr "Aug"
+
+msgid "mjcp.month.short.9"
+msgstr "Sep"
+
+msgid "mjcp.month.short.10"
+msgstr "Oct"
+
+msgid "mjcp.month.short.11"
+msgstr "Nov"
+
+msgid "mjcp.month.short.12"
+msgstr "Dec"
+
+msgid "mjcp.month.full.1"
+msgstr "January"
+
+msgid "mjcp.month.full.2"
+msgstr "February"
+
+msgid "mjcp.month.full.3"
+msgstr "March"
+
+msgid "mjcp.month.full.4"
+msgstr "April"
+
+msgid "mjcp.month.full.5"
+msgstr "May"
+
+msgid "mjcp.month.full.6"
+msgstr "June"
+
+msgid "mjcp.month.full.7"
+msgstr "July"
+
+msgid "mjcp.month.full.8"
+msgstr "August"
+
+msgid "mjcp.month.full.9"
+msgstr "September"
+
+msgid "mjcp.month.full.10"
+msgstr "October"
+
+msgid "mjcp.month.full.11"
+msgstr "November"
+
+msgid "mjcp.month.full.12"
+msgstr "December"
+
+msgid "mjcp.nav.sidebarTitle"
+msgstr "Multi-Journal Control Panel"
+
+msgid "mjcp.nav.brand"
+msgstr "Control Panel {$house}"
+
+msgid "mjcp.nav.dashboard"
+msgstr "Dashboard"
+
+msgid "mjcp.nav.bottlenecks"
+msgstr "Bottlenecks"
+
+msgid "mjcp.nav.journals"
+msgstr "Journals"
+
+msgid "mjcp.nav.issues"
+msgstr "Issues"
+
+msgid "mjcp.nav.performance"
+msgstr "Performance"
+
+msgid "mjcp.nav.payments"
+msgstr "Payments"
+
+msgid "mjcp.nav.authorLinks"
+msgstr "Author Links"
+
+msgid "mjcp.nav.testimonials"
+msgstr "Testimonials"
+
+msgid "mjcp.nav.settings"
+msgstr "Settings"
+
+msgid "mjcp.common.allJournals"
+msgstr "All {$house} journals"
+
+msgid "mjcp.common.period"
+msgstr "Period"
+
+msgid "mjcp.common.period30d"
+msgstr "Last 30 days"
+
+msgid "mjcp.common.period90d"
+msgstr "Last 90 days"
+
+msgid "mjcp.common.period180d"
+msgstr "Last 6 months"
+
+msgid "mjcp.common.period365d"
+msgstr "Last 1 year"
+
+msgid "mjcp.common.periodAll"
+msgstr "All time"
+
+msgid "mjcp.common.workingDays"
+msgstr "working days"
+
+msgid "mjcp.common.days"
+msgstr "days"
+
+msgid "mjcp.common.status"
+msgstr "Status"
+
+msgid "mjcp.common.action"
+msgstr "Action"
+
+msgid "mjcp.common.save"
+msgstr "Save"
+
+msgid "mjcp.common.cancel"
+msgstr "Cancel"
+
+msgid "mjcp.common.delete"
+msgstr "Delete"
+
+msgid "mjcp.common.close"
+msgstr "Close"
+
+msgid "mjcp.common.download"
+msgstr "Download"
+
+msgid "mjcp.common.selectAll"
+msgstr "Select all"
+
+msgid "mjcp.common.date"
+msgstr "Date"
+
+msgid "mjcp.common.search"
+msgstr "Search journals or manuscripts..."
+
+msgid "mjcp.common.noData"
+msgstr "No matching records found for the current filter."
+
+msgid "mjcp.common.lastUpdated"
+msgstr "Last data update: {$time}"
+
+msgid "mjcp.common.openInOjs"
+msgstr "Open in OJS"
+
+msgid "mjcp.common.openOjs"
+msgstr "Open OJS"
+
+msgid "mjcp.common.langIndonesia"
+msgstr "Indonesian"
+
+msgid "mjcp.common.langEnglish"
+msgstr "English"
+
+msgid "mjcp.error.accessDenied"
+msgstr "Access denied: You do not have permission to access this module."
+
+msgid "mjcp.dashboard.title"
+msgstr "{$house} Journals Summary"
+
+msgid "mjcp.dashboard.subtitle"
+msgstr "Unified operational control panel across all journals in the {$house} publishing house."
+
+msgid "mjcp.dashboard.totalArticles"
+msgstr "All articles (total received)"
+
+msgid "mjcp.dashboard.activeSubmissions"
+msgstr "Active manuscripts"
+
+msgid "mjcp.dashboard.overdueSubmissions"
+msgstr "Overdue manuscripts"
+
+msgid "mjcp.dashboard.readyToPublish"
+msgstr "Ready to publish"
+
+msgid "mjcp.dashboard.issuesBelowQuota"
+msgstr "Issues below quota"
+
+msgid "mjcp.dashboard.drilldownHeading"
+msgstr "Underlying Manuscripts List"
+
+msgid "mjcp.pipeline.title"
+msgstr "Pipeline per journal"
+
+msgid "mjcp.pipeline.allArticle"
+msgstr "All article"
+
+msgid "mjcp.pipeline.submission"
+msgstr "Submission"
+
+msgid "mjcp.pipeline.review"
+msgstr "Review"
+
+msgid "mjcp.pipeline.revision"
+msgstr "Revision"
+
+msgid "mjcp.pipeline.copyediting"
+msgstr "Copyediting"
+
+msgid "mjcp.pipeline.production"
+msgstr "Production"
+
+msgid "mjcp.pipeline.published"
+msgstr "Published"
+
+msgid "mjcp.pipeline.footnote"
+msgstr "All article = total articles received overall, broken down by stage. Red: overdue manuscripts. Yellow: almost due. Click any number to open the manuscript list."
+
+msgid "mjcp.stage.submission"
+msgstr "Submission"
+
+msgid "mjcp.stage.reviewRound"
+msgstr "Review round {$round}"
+
+msgid "mjcp.stage.authorRevision"
+msgstr "Author revision"
+
+msgid "mjcp.stage.copyediting"
+msgstr "Copyediting"
+
+msgid "mjcp.stage.production"
+msgstr "Production"
+
+msgid "mjcp.stage.published"
+msgstr "Published"
+
+msgid "mjcp.stage.declined"
+msgstr "Declined"
+
+msgid "mjcp.bottleneck.title"
+msgstr "Bottleneck Manuscripts"
+
+msgid "mjcp.bottleneck.subtitle"
+msgstr "Manuscripts that have exceeded or are approaching their editorial stage time threshold."
+
+msgid "mjcp.bottleneck.almostDue"
+msgstr "Almost due"
+
+msgid "mjcp.bottleneck.overdueDays"
+msgstr "+{$days} days"
+
+msgid "mjcp.bottleneck.copyeditingOverdue"
+msgstr "D+{$days} month-end"
+
+msgid "mjcp.bottleneck.copyeditingRemaining"
+msgstr "D-{$days} month-end"
+
+msgid "mjcp.bottleneck.footnote"
+msgstr "Sorted from longest overdue first. Threshold rules match the Editorial Reminder Dashboard configuration."
+
+msgid "mjcp.table.code"
+msgstr "Code"
+
+msgid "mjcp.table.title"
+msgstr "Title"
+
+msgid "mjcp.table.journal"
+msgstr "Journal"
+
+msgid "mjcp.table.stage"
+msgstr "Stage"
+
+msgid "mjcp.table.stageEntry"
+msgstr "Stage entry"
+
+msgid "mjcp.table.duration"
+msgstr "Duration"
+
+msgid "mjcp.table.overdue"
+msgstr "Overdue"
+
+msgid "mjcp.journals.title"
+msgstr "Connected Journals"
+
+msgid "mjcp.journals.subtitle"
+msgstr "All journals connected within the {$house} publishing house."
+
+msgid "mjcp.journals.lastSync"
+msgstr "Last synchronized"
+
+msgid "mjcp.journals.activeSubmissions"
+msgstr "Active manuscripts"
+
+msgid "mjcp.journals.status.connected"
+msgstr "Connected"
+
+msgid "mjcp.journals.status.pending"
+msgstr "Pending"
+
+msgid "mjcp.journals.status.failed"
+msgstr "Failed"
+
+msgid "mjcp.journals.syncNow"
+msgstr "Synchronize"
+
+msgid "mjcp.journals.footnote"
+msgstr "This panel connects all journals in the publishing house. Click Open OJS to jump directly to the journal."
+
+msgid "mjcp.issue.title"
+msgstr "Issue Health"
+
+msgid "mjcp.issue.subtitle"
+msgstr "Article quota and readiness for the next target issue per journal."
+
+msgid "mjcp.issue.targetIssue"
+msgstr "Target issue"
+
+msgid "mjcp.issue.quota"
+msgstr "Quota"
+
+msgid "mjcp.issue.plotted"
+msgstr "Plotted"
+
+msgid "mjcp.issue.ready"
+msgstr "Ready"
+
+msgid "mjcp.issue.inProgress"
+msgstr "In progress"
+
+msgid "mjcp.issue.onTrack"
+msgstr "On track"
+
+msgid "mjcp.issue.underQuota"
+msgstr "Short {$count}"
+
+msgid "mjcp.issue.overQuota"
+msgstr "Over {$count}"
+
+msgid "mjcp.issue.readyOfQuota"
+msgstr "Ready {$count} of {$quota} quota"
+
+msgid "mjcp.issue.plottedOfQuota"
+msgstr "Plotted {$count} of {$quota} quota"
+
+msgid "mjcp.issue.footnote"
+msgstr "Ready = LOA and copyediting completed. Warnings appear when ready articles are below or above quota."
+
+msgid "mjcp.performance.title"
+msgstr "Journal Performance"
+
+msgid "mjcp.performance.subtitle"
+msgstr "Monthly submitted vs published trends and key performance indicators (KPIs)."
+
+msgid "mjcp.performance.chartHeading"
+msgstr "Submitted vs published manuscripts per month"
+
+msgid "mjcp.performance.chartLegend"
+msgstr "Dark: submitted. Light: published."
+
+msgid "mjcp.performance.avgTurnaround"
+msgstr "Average submission to publication"
+
+msgid "mjcp.performance.acceptanceRate"
+msgstr "Acceptance rate"
+
+msgid "mjcp.performance.rejectionRate"
+msgstr "Rejection rate"
+
+msgid "mjcp.performance.onTimeRate"
+msgstr "On-time per stage"
+
+msgid "mjcp.performance.month"
+msgstr "Month"
+
+msgid "mjcp.performance.submitted"
+msgstr "Submitted"
+
+msgid "mjcp.performance.accepted"
+msgstr "Accepted"
+
+msgid "mjcp.performance.rejected"
+msgstr "Rejected"
+
+msgid "mjcp.performance.published"
+msgstr "Published"
+
+msgid "mjcp.payment.title"
+msgstr "Article Payment Status"
+
+msgid "mjcp.payment.subtitle"
+msgstr "Manage author payment verification, amount, notes, and transfer proof."
+
+msgid "mjcp.payment.restrictedBanner"
+msgstr "Restricted access: only registered usernames (Journal Manager and Finance Admin) can view this page. Data modifications by Finance Admin only."
+
+msgid "mjcp.payment.filter.all"
+msgstr "All manuscripts"
+
+msgid "mjcp.payment.filter.formUnfilled"
+msgstr "Form not filled"
+
+msgid "mjcp.payment.filter.formUnverified"
+msgstr "Form filled, unverified"
+
+msgid "mjcp.payment.filter.loaUnpaid"
+msgstr "LOA uploaded, unpaid"
+
+msgid "mjcp.payment.filter.paidNotCopyediting"
+msgstr "Paid, not in copyediting"
+
+msgid "mjcp.payment.filter.paidUnpublished"
+msgstr "Paid, not yet published"
+
+msgid "mjcp.payment.importExcelBtn"
+msgstr "Import Excel / CSV"
+
+msgid "mjcp.payment.author"
+msgstr "Author"
+
+msgid "mjcp.payment.formStatus"
+msgstr "Form"
+
+msgid "mjcp.payment.formFilled"
+msgstr "Filled"
+
+msgid "mjcp.payment.formUnfilled"
+msgstr "Not filled"
+
+msgid "mjcp.payment.status"
+msgstr "Payment status"
+
+msgid "mjcp.payment.status.paid"
+msgstr "Paid"
+
+msgid "mjcp.payment.status.unpaid"
+msgstr "Unpaid"
+
+msgid "mjcp.payment.amount"
+msgstr "Amount"
+
+msgid "mjcp.payment.amountLabel"
+msgstr "Amount (IDR)"
+
+msgid "mjcp.payment.notes"
+msgstr "Notes"
+
+msgid "mjcp.payment.notesOptional"
+msgstr "Notes (optional)"
+
+msgid "mjcp.payment.proof"
+msgstr "Proof"
+
+msgid "mjcp.payment.save"
+msgstr "Save"
+
+msgid "mjcp.payment.sendLink"
+msgstr "Send link"
+
+msgid "mjcp.payment.viewSubmission"
+msgstr "View form"
+
+msgid "mjcp.payment.card.paid"
+msgstr "Paid"
+
+msgid "mjcp.payment.card.unpaid"
+msgstr "Unpaid"
+
+msgid "mjcp.payment.card.formUnfilled"
+msgstr "Form not filled"
+
+msgid "mjcp.payment.footnote"
+msgstr "Author and Proof columns are populated automatically from the author confirmation form without re-entry."
+
+msgid "mjcp.payment.recapHeading"
+msgstr "Payment Recap per Journal"
+
+msgid "mjcp.payment.detailTitle"
+msgstr "Author Submission: {$id}"
+
+msgid "mjcp.payment.detailSubtitle"
+msgstr "{$journal}. Opened from View form on the Payments page."
+
+msgid "mjcp.payment.submittedByAuthorHeading"
+msgstr "Submitted by author ({$date})"
+
+msgid "mjcp.payment.submittedByAuthorEmpty"
+msgstr "Form has not been filled by the author"
+
+msgid "mjcp.payment.verificationHeading"
+msgstr "Verification (Finance Admin)"
+
+msgid "mjcp.payment.replaceProofOptional"
+msgstr "Upload / Replace Payment Proof (optional; JPG, PNG, PDF max 1 MB)"
+
+msgid "mjcp.payment.historyHeading"
+msgstr "Change history"
+
+msgid "mjcp.payment.jmReadOnlyNotice"
+msgstr "Journal Manager has read-only access without the Save button."
+
+msgid "mjcp.payment.savedSuccess"
+msgstr "Payment verification saved and recorded in audit history."
+
+msgid "mjcp.payment.error.articleNotFound"
+msgstr "Manuscript not found in summary database."
+
+msgid "mjcp.payment.workflowWarningUnpaid"
+msgstr "Multi-Journal Control Panel Warning: Manuscript #{$id} is still marked as unpaid."
+
+msgid "mjcp.payment.import.modalTitle"
+msgstr "Bulk Payment Import (Excel / CSV)"
+
+msgid "mjcp.payment.import.instructions"
+msgstr "Upload an Excel (.xlsx) or CSV (.csv) file, or paste CSV rows formatted as: article_code, payment_status (unpaid/paid), amount, notes (e.g. 2038, paid, 1500000, Settled or 2090, paid, 0, FREE)."
+
+msgid "mjcp.payment.import.fileLabel"
+msgstr "Upload Excel (.xlsx) or CSV (.csv) file (optional)"
+
+msgid "mjcp.payment.import.placeholder"
+msgstr "2038, paid, 1500000, Settled\n2090, paid, 0, FREE"
+
+msgid "mjcp.payment.import.validationCol"
+msgstr "Validation"
+
+msgid "mjcp.payment.import.okBadge"
+msgstr "OK"
+
+msgid "mjcp.payment.import.previewBtn"
+msgstr "Preview & Validate"
+
+msgid "mjcp.payment.import.commitBtn"
+msgstr "Save Valid Rows"
+
+msgid "mjcp.payment.import.errorInvalidCode"
+msgstr "Invalid article code"
+
+msgid "mjcp.payment.import.errorArticleNotFound"
+msgstr "Article code not found"
+
+msgid "mjcp.payment.import.errorInvalidAmount"
+msgstr "Amount is not numeric"
+
+msgid "mjcp.links.title"
+msgstr "Author Form Links"
+
+msgid "mjcp.links.subtitle"
+msgstr "Accepted manuscripts and their unique confirmation links for authors."
+
+msgid "mjcp.links.generateSelectedBtn"
+msgstr "Create links for selected manuscripts"
+
+msgid "mjcp.links.exportLinksBtn"
+msgstr "Export links list"
+
+msgid "mjcp.links.filterUnfilledBtn"
+msgstr "Form not filled ({$count})"
+
+msgid "mjcp.links.loaStatus"
+msgstr "LOA"
+
+msgid "mjcp.links.publicationStatus"
+msgstr "Publication"
+
+msgid "mjcp.links.url"
+msgstr "Link"
+
+msgid "mjcp.links.expiresAt"
+msgstr "Valid until"
+
+msgid "mjcp.links.copyBtn"
+msgstr "Copy"
+
+msgid "mjcp.links.copied"
+msgstr "Copied!"
+
+msgid "mjcp.links.createBtn"
+msgstr "Create link"
+
+msgid "mjcp.links.deactivateBtn"
+msgstr "Deactivate"
+
+msgid "mjcp.links.notCreated"
+msgstr "Not created"
+
+msgid "mjcp.links.generatedSuccess"
+msgstr "{$count} unique author link(s) generated successfully."
+
+msgid "mjcp.links.revokedSuccess"
+msgstr "Author link deactivated successfully."
+
+msgid "mjcp.links.footnote"
+msgstr "Each link contains a cryptographically secure token, has an expiration date, and can be deactivated or regenerated."
+
+msgid "mjcp.loa.cardHeading"
+msgstr "LOA (uploaded by Journal Manager)"
+
+msgid "mjcp.loa.numberLabel"
+msgstr "LOA Number"
+
+msgid "mjcp.loa.numberPlaceholder"
+msgstr "Enter LOA number or code"
+
+msgid "mjcp.loa.fileLabel"
+msgstr "LOA File (PDF)"
+
+msgid "mjcp.loa.visibilityNote"
+msgstr "LOA is visible to the author and can be validated once payment status is Paid. Current status:"
+
+msgid "mjcp.loa.uploadBtn"
+msgstr "Upload LOA"
+
+msgid "mjcp.loa.download"
+msgstr "Download LOA"
+
+msgid "mjcp.loa.validateBtn"
+msgstr "Validate LOA"
+
+msgid "mjcp.loa.status.uploaded"
+msgstr "Uploaded"
+
+msgid "mjcp.loa.status.notUploaded"
+msgstr "Not uploaded"
+
+msgid "mjcp.loa.status.locked"
+msgstr "Locked"
+
+msgid "mjcp.loa.status.available"
+msgstr "Available"
+
+msgid "mjcp.loa.savedSuccess"
+msgstr "LOA file and number saved and recorded in history."
+
+msgid "mjcp.loa.error.numberRequired"
+msgstr "LOA number is required."
+
+msgid "mjcp.loa.error.fileRequired"
+msgstr "A PDF LOA file is required."
+
+msgid "mjcp.loa.error.invalidPdf"
+msgstr "The LOA file must be a valid PDF document (max 10 MB)."
+
+msgid "mjcp.loa.error.accessLocked"
+msgstr "The LOA cannot be downloaded yet because your payment has not been verified by Finance Admin."
+
+msgid "mjcp.loa.error.fileNotFound"
+msgstr "LOA file is not available yet."
+
+msgid "mjcp.loa.validation.pageTitle"
+msgstr "Letter of Acceptance (LOA) Validation"
+
+msgid "mjcp.loa.validation.subtitle"
+msgstr "Verify the authenticity of a journal Letter of Acceptance (LOA) number."
+
+msgid "mjcp.loa.validation.searchBtn"
+msgstr "Verify LOA Number"
+
+msgid "mjcp.loa.validation.validBadge"
+msgstr "Valid & Verified LOA"
+
+msgid "mjcp.loa.validation.notFound"
+msgstr "LOA number not found or payment for the associated manuscript has not been verified."
+
+msgid "mjcp.loa.validation.dateIssued"
+msgstr "LOA Date"
+
+msgid "mjcp.publication.status.published"
+msgstr "Published"
+
+msgid "mjcp.publication.status.unpublished"
+msgstr "Not published yet"
+
+msgid "mjcp.authorForm.title"
+msgstr "Your Manuscript Page"
+
+msgid "mjcp.authorForm.subtitlePending"
+msgstr "Your manuscript has been accepted. Complete the payment confirmation below; the LOA and publication link will appear on this page."
+
+msgid "mjcp.authorForm.subtitleVerified"
+msgstr "Your payment has been verified."
+
+msgid "mjcp.authorForm.section1Title"
+msgstr "1. Payment confirmation"
+
+msgid "mjcp.authorForm.verifiedBadge"
+msgstr "Verified"
+
+msgid "mjcp.authorForm.submittedSuccessBanner"
+msgstr "Thank you! Your payment confirmation has been received and is awaiting verification by the Finance Admin."
+
+msgid "mjcp.authorForm.manuscriptId"
+msgstr "Manuscript ID"
+
+msgid "mjcp.authorForm.journalChoice"
+msgstr "Journal Choice"
+
+msgid "mjcp.authorForm.articleTitle"
+msgstr "Article Title"
+
+msgid "mjcp.authorForm.fullNameAuthors"
+msgstr "Full Name Author(s)"
+
+msgid "mjcp.authorForm.affiliation"
+msgstr "Affiliation"
+
+msgid "mjcp.authorForm.correspondentEmail"
+msgstr "Correspondent Email"
+
+msgid "mjcp.authorForm.whatsappNumber"
+msgstr "WhatsApp Number"
+
+msgid "mjcp.authorForm.transferProofLabel"
+msgstr "Transfer Proof"
+
+msgid "mjcp.authorForm.transferProof"
+msgstr "Transfer Proof (optional; JPG, PNG, or PDF, max 1 MB)"
+
+msgid "mjcp.authorForm.testimonial"
+msgstr "Testimonial (required)"
+
+msgid "mjcp.authorForm.consentText"
+msgstr "I agree that this testimonial may be published on the journal's social media along with my name and institution. (required)"
+
+msgid "mjcp.authorForm.consentWithdrawNote"
+msgstr "You may withdraw your consent at any time by contacting the journal."
+
+msgid "mjcp.authorForm.submit"
+msgstr "Submit"
+
+msgid "mjcp.authorForm.section2Title"
+msgstr "2. LOA / Letter of Acceptance"
+
+msgid "mjcp.authorForm.loaLockedNote"
+msgstr "The LOA becomes available after your payment is verified."
+
+msgid "mjcp.authorForm.loaValidationHint"
+msgstr "Validate LOA opens the public LOA Validation page."
+
+msgid "mjcp.authorForm.section3Title"
+msgstr "3. Publication link"
+
+msgid "mjcp.authorForm.publicationPendingNote"
+msgstr "The article link will appear here once published."
+
+msgid "mjcp.authorForm.articleLinkLabel"
+msgstr "Article"
+
+msgid "mjcp.authorForm.doiLabel"
+msgstr "DOI"
+
+msgid "mjcp.authorForm.footerNote"
+msgstr "After submitting, you will see a confirmation message stating that your entry has been received."
+
+msgid "mjcp.authorForm.submittedDateLabel"
+msgstr "Submitted"
+
+msgid "mjcp.authorForm.error.tokenInvalidOrExpired"
+msgstr "This author manuscript link is invalid, expired, or has been deactivated. Please contact the journal manager for a new link."
+
+msgid "mjcp.authorForm.error.fullNameRequired"
+msgstr "Full Name Author(s) is required."
+
+msgid "mjcp.authorForm.error.affiliationRequired"
+msgstr "Author Affiliation is required."
+
+msgid "mjcp.authorForm.error.invalidEmail"
+msgstr "Invalid correspondent email address format."
+
+msgid "mjcp.authorForm.error.invalidWhatsapp"
+msgstr "Invalid WhatsApp number format (use digits, minimum 8 characters)."
+
+msgid "mjcp.authorForm.error.testimonialRequired"
+msgstr "Testimonial is required before submitting."
+
+msgid "mjcp.authorForm.error.consentRequired"
+msgstr "You must check the testimonial publication consent box."
+
+msgid "mjcp.authorForm.error.fileUploadError"
+msgstr "An error occurred while uploading the transfer proof file."
+
+msgid "mjcp.authorForm.submittedSuccess"
+msgstr "Your payment confirmation has been submitted successfully."
+
+msgid "mjcp.upload.error.fileTooLarge"
+msgstr "File size exceeds the maximum limit ({$maxKb} KB / 1 MB)."
+
+msgid "mjcp.upload.error.invalidProofFormat"
+msgstr "Unsupported file format. Please upload a JPG, PNG, or PDF file."
+
+msgid "mjcp.upload.error.storageFailed"
+msgstr "Failed to save file to private server storage."
+
+msgid "mjcp.upload.error.fileNotFound"
+msgstr "Payment proof file not found."
+
+msgid "mjcp.testimonial.title"
+msgstr "Author Testimonials"
+
+msgid "mjcp.testimonial.subtitle"
+msgstr "Author testimonials collected from confirmation forms and their publication consent status."
+
+msgid "mjcp.testimonial.exportApprovedBtn"
+msgstr "Export approved testimonials"
+
+msgid "mjcp.testimonial.text"
+msgstr "Testimonial"
+
+msgid "mjcp.testimonial.authorName"
+msgstr "Name"
+
+msgid "mjcp.testimonial.institution"
+msgstr "Institution"
+
+msgid "mjcp.testimonial.consentStatus"
+msgstr "Consent"
+
+msgid "mjcp.testimonial.submittedAt"
+msgstr "Submitted"
+
+msgid "mjcp.testimonial.status.approved"
+msgstr "Approved"
+
+msgid "mjcp.testimonial.status.withdrawn"
+msgstr "Consent withdrawn"
+
+msgid "mjcp.testimonial.status.approvedFull"
+msgstr "Approved for publication"
+
+msgid "mjcp.testimonial.withdrawAction"
+msgstr "Withdraw consent"
+
+msgid "mjcp.testimonial.restoreAction"
+msgstr "Restore consent"
+
+msgid "mjcp.testimonial.footnote"
+msgstr "Testimonials and consent are mandatory on the form; testimonials whose consent has been withdrawn are excluded from social media export lists."
+
+msgid "mjcp.settings.title"
+msgstr "Settings"
+
+msgid "mjcp.settings.subtitle"
+msgstr "Configure stage time thresholds, roles, payment access list, issue quotas, holiday calendar, and synchronization."
+
+msgid "mjcp.settings.thresholdsHeading"
+msgstr "Stage time thresholds"
+
+msgid "mjcp.settings.round1LimitLabel"
+msgstr "Review round 1 (working days, 14-21)"
+
+msgid "mjcp.settings.round2LimitLabel"
+msgstr "Review round 2+ (working days)"
+
+msgid "mjcp.settings.copyeditingWarningLabel"
+msgstr "Copyediting reminder (D-)"
+
+msgid "mjcp.settings.rolesHeading"
+msgstr "Access and roles"
+
+msgid "mjcp.settings.role.director"
+msgstr "Directors"
+
+msgid "mjcp.settings.role.directorDesc"
+msgstr "Dashboard, no payment access"
+
+msgid "mjcp.settings.role.jm"
+msgstr "Journal Manager"
+
+msgid "mjcp.settings.role.jmDesc"
+msgstr "Dashboard, payment (view only)"
+
+msgid "mjcp.settings.role.finance"
+msgstr "Finance Admin"
+
+msgid "mjcp.settings.role.financeDesc"
+msgstr "Payment (view and edit)"
+
+msgid "mjcp.settings.role.technical"
+msgstr "Technical Admin"
+
+msgid "mjcp.settings.role.technicalDesc"
+msgstr "Configuration"
+
+msgid "mjcp.settings.usernamesLabel"
+msgstr "Usernames"
+
+msgid "mjcp.settings.paymentAccessUsersLabel"
+msgstr "Usernames authorized for payment access"
+
+msgid "mjcp.settings.authorFormHeading"
+msgstr "Author form"
+
+msgid "mjcp.settings.tokenExpDaysLabel"
+msgstr "Link validity period (days)"
+
+msgid "mjcp.settings.maxUploadSizeLabel"
+msgstr "Max proof upload size (MB)"
+
+msgid "mjcp.settings.loaValidationUrlLabel"
+msgstr "Custom LOA Validation URL (optional)"
+
+msgid "mjcp.settings.houseNameLabel"
+msgstr "Publishing House Name"
+
+msgid "mjcp.settings.quotasHeading"
+msgstr "Issue quota per journal"
+
+msgid "mjcp.settings.quotaPerIssue"
+msgstr "Quota per issue"
+
+msgid "mjcp.settings.holidaysHeading"
+msgstr "Holidays"
+
+msgid "mjcp.settings.noHolidays"
+msgstr "No holidays configured yet."
+
+msgid "mjcp.settings.addHolidayBtn"
+msgstr "Add holiday"
+
+msgid "mjcp.settings.holidayDescPlaceholder"
+msgstr "Holiday description"
+
+msgid "mjcp.settings.error.invalidHoliday"
+msgstr "Holiday date and description are required."
+
+msgid "mjcp.settings.syncHeading"
+msgstr "Synchronization"
+
+msgid "mjcp.settings.lastSyncInfo"
+msgstr "Last run: {$time}. Status: {$status}."
+
+msgid "mjcp.settings.syncNowBtn"
+msgstr "Synchronize now"
+
+msgid "mjcp.settings.auditHeading"
+msgstr "Activity & Audit Log"
+
+msgid "mjcp.audit.timestamp"
+msgstr "Timestamp"
+
+msgid "mjcp.audit.user"
+msgstr "User"
+
+msgid "mjcp.audit.action"
+msgstr "Action"
+
+msgid "mjcp.audit.entity"
+msgstr "Entity"
+
+msgid "mjcp.audit.details"
+msgstr "Details"
+
+msgid "mjcp.sync.taskName"
+msgstr "Multi-Journal Control Panel Scheduled Synchronization"
+
+msgid "mjcp.sync.completedSuccess"
+msgstr "Synchronization completed ({$count} articles processed)."
+
+msgid "mjcp.export.excel"
+msgstr "Export Excel"
+
+msgid "mjcp.export.csv"
+msgstr "Export CSV"
+
+msgid "mjcp.export.pdf"
+msgstr "Export PDF"
+
+msgid "mjcp.export.reportTitle"
+msgstr "Report Title"
+
+msgid "mjcp.export.publishingHouse"
+msgstr "Publishing House"
+
+msgid "mjcp.export.exportedAt"
+msgstr "Generated At"
+
+msgid "mjcp.export.activeFilters"
+msgstr "Active Filters"
+
+msgid "mjcp.export.exportedBy"
+msgstr "Generated By"
+
+msgid "mjcp.common.defaultHouseName"
+msgstr "Publishing House"
+
+msgid "mjcp.common.untitledManuscript"
+msgstr "Manuscript #{$id}"
+
+msgid "mjcp.error.invalidCsrf"
+msgstr "Invalid CSRF token."
+
+msgid "mjcp.export.totalLabel"
+msgstr "Total"
+
+msgid "mjcp.export.pageOf"
+msgstr "Page {$current} / {$total}"
+
+msgid "mjcp.export.filterSummary"
+msgstr "Journal: {$journal} | Period: {$period}"
+
+msgid "mjcp.settings.usernamesPlaceholder"
+msgstr "username1, username2"
+
+msgid "mjcp.settings.workingDaysLabel"
+msgstr "Working days"
+
+msgid "mjcp.settings.workingDaysHint"
+msgstr "Select active working days (default: Monday to Friday). Unchecked days are excluded from stage duration calculations."
+
+msgid "mjcp.weekday.1"
+msgstr "Monday"
+
+msgid "mjcp.weekday.2"
+msgstr "Tuesday"
+
+msgid "mjcp.weekday.3"
+msgstr "Wednesday"
+
+msgid "mjcp.weekday.4"
+msgstr "Thursday"
+
+msgid "mjcp.weekday.5"
+msgstr "Friday"
+
+msgid "mjcp.weekday.6"
+msgstr "Saturday"
+
+msgid "mjcp.weekday.7"
+msgstr "Sunday"
+
+msgid "mjcp.authorForm.whatsappPlaceholder"
+msgstr "+62 8xx-xxxx-xxxx"

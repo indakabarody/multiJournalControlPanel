@@ -1,0 +1,1069 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Multi-Journal Control Panel 1.0.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: Indaka Barody\n"
+"Language-Team: Indonesian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: id_ID\n"
+
+msgid "plugins.generic.multiJournalControlPanel.displayName"
+msgstr "Multi-Journal Control Panel"
+
+msgid "plugins.generic.multiJournalControlPanel.description"
+msgstr "Plugin untuk mengintegrasikan monitoring editorial, manajemen pembayaran, kesiapan issue, performa jurnal, serta layanan mandiri penulis dalam satu dashboard operasional rumah jurnal."
+
+msgid "mjcp.action.openControlPanel"
+msgstr "Buka Control Panel"
+
+msgid "mjcp.currency.prefix"
+msgstr "Rp"
+
+msgid "mjcp.month.short.1"
+msgstr "Jan"
+
+msgid "mjcp.month.short.2"
+msgstr "Feb"
+
+msgid "mjcp.month.short.3"
+msgstr "Mar"
+
+msgid "mjcp.month.short.4"
+msgstr "Apr"
+
+msgid "mjcp.month.short.5"
+msgstr "Mei"
+
+msgid "mjcp.month.short.6"
+msgstr "Jun"
+
+msgid "mjcp.month.short.7"
+msgstr "Jul"
+
+msgid "mjcp.month.short.8"
+msgstr "Agu"
+
+msgid "mjcp.month.short.9"
+msgstr "Sep"
+
+msgid "mjcp.month.short.10"
+msgstr "Okt"
+
+msgid "mjcp.month.short.11"
+msgstr "Nov"
+
+msgid "mjcp.month.short.12"
+msgstr "Des"
+
+msgid "mjcp.month.full.1"
+msgstr "Januari"
+
+msgid "mjcp.month.full.2"
+msgstr "Februari"
+
+msgid "mjcp.month.full.3"
+msgstr "Maret"
+
+msgid "mjcp.month.full.4"
+msgstr "April"
+
+msgid "mjcp.month.full.5"
+msgstr "Mei"
+
+msgid "mjcp.month.full.6"
+msgstr "Juni"
+
+msgid "mjcp.month.full.7"
+msgstr "Juli"
+
+msgid "mjcp.month.full.8"
+msgstr "Agustus"
+
+msgid "mjcp.month.full.9"
+msgstr "September"
+
+msgid "mjcp.month.full.10"
+msgstr "Oktober"
+
+msgid "mjcp.month.full.11"
+msgstr "November"
+
+msgid "mjcp.month.full.12"
+msgstr "Desember"
+
+msgid "mjcp.nav.sidebarTitle"
+msgstr "Control Panel Rumah Jurnal"
+
+msgid "mjcp.nav.brand"
+msgstr "Control Panel {$house}"
+
+msgid "mjcp.nav.dashboard"
+msgstr "Beranda"
+
+msgid "mjcp.nav.bottlenecks"
+msgstr "Naskah Macet"
+
+msgid "mjcp.nav.journals"
+msgstr "Jurnal"
+
+msgid "mjcp.nav.issues"
+msgstr "Issue"
+
+msgid "mjcp.nav.performance"
+msgstr "Kinerja"
+
+msgid "mjcp.nav.payments"
+msgstr "Pembayaran"
+
+msgid "mjcp.nav.authorLinks"
+msgstr "Link Form"
+
+msgid "mjcp.nav.testimonials"
+msgstr "Testimoni"
+
+msgid "mjcp.nav.settings"
+msgstr "Pengaturan"
+
+msgid "mjcp.common.allJournals"
+msgstr "Semua jurnal {$house}"
+
+msgid "mjcp.common.period"
+msgstr "Periode"
+
+msgid "mjcp.common.period30d"
+msgstr "30 hari terakhir"
+
+msgid "mjcp.common.period90d"
+msgstr "90 hari terakhir"
+
+msgid "mjcp.common.period180d"
+msgstr "6 bulan terakhir"
+
+msgid "mjcp.common.period365d"
+msgstr "1 tahun terakhir"
+
+msgid "mjcp.common.periodAll"
+msgstr "Semua periode"
+
+msgid "mjcp.common.workingDays"
+msgstr "hari kerja"
+
+msgid "mjcp.common.days"
+msgstr "hari"
+
+msgid "mjcp.common.status"
+msgstr "Status"
+
+msgid "mjcp.common.action"
+msgstr "Aksi"
+
+msgid "mjcp.common.save"
+msgstr "Simpan"
+
+msgid "mjcp.common.cancel"
+msgstr "Batal"
+
+msgid "mjcp.common.delete"
+msgstr "Hapus"
+
+msgid "mjcp.common.close"
+msgstr "Tutup"
+
+msgid "mjcp.common.download"
+msgstr "Unduh"
+
+msgid "mjcp.common.selectAll"
+msgstr "Pilih semua"
+
+msgid "mjcp.common.date"
+msgstr "Tanggal"
+
+msgid "mjcp.common.search"
+msgstr "Cari jurnal atau naskah..."
+
+msgid "mjcp.common.noData"
+msgstr "Belum ada data yang sesuai dengan filter."
+
+msgid "mjcp.common.lastUpdated"
+msgstr "Pembaruan data terakhir: {$time}"
+
+msgid "mjcp.common.openInOjs"
+msgstr "Buka di OJS"
+
+msgid "mjcp.common.openOjs"
+msgstr "Buka OJS"
+
+msgid "mjcp.common.langIndonesia"
+msgstr "Indonesia"
+
+msgid "mjcp.common.langEnglish"
+msgstr "English"
+
+msgid "mjcp.error.accessDenied"
+msgstr "Akses ditolak: Anda tidak memiliki hak akses untuk membuka modul ini."
+
+msgid "mjcp.dashboard.title"
+msgstr "Ringkasan {$house} Journals"
+
+msgid "mjcp.dashboard.subtitle"
+msgstr "Panel operasional terpadu untuk pemantauan seluruh jurnal dalam rumah jurnal {$house}."
+
+msgid "mjcp.dashboard.totalArticles"
+msgstr "Semua artikel (masuk keseluruhan)"
+
+msgid "mjcp.dashboard.activeSubmissions"
+msgstr "Naskah aktif"
+
+msgid "mjcp.dashboard.overdueSubmissions"
+msgstr "Melewati batas waktu"
+
+msgid "mjcp.dashboard.readyToPublish"
+msgstr "Siap terbit"
+
+msgid "mjcp.dashboard.issuesBelowQuota"
+msgstr "Issue belum penuhi kuota"
+
+msgid "mjcp.dashboard.drilldownHeading"
+msgstr "Daftar Naskah Pendukung"
+
+msgid "mjcp.pipeline.title"
+msgstr "Pipeline per jurnal"
+
+msgid "mjcp.pipeline.allArticle"
+msgstr "All article"
+
+msgid "mjcp.pipeline.submission"
+msgstr "Submission"
+
+msgid "mjcp.pipeline.review"
+msgstr "Review"
+
+msgid "mjcp.pipeline.revision"
+msgstr "Revisi"
+
+msgid "mjcp.pipeline.copyediting"
+msgstr "Copyediting"
+
+msgid "mjcp.pipeline.production"
+msgstr "Produksi"
+
+msgid "mjcp.pipeline.published"
+msgstr "Terbit"
+
+msgid "mjcp.pipeline.footnote"
+msgstr "All article = jumlah artikel masuk keseluruhan, lalu dirinci per tahap. Merah: ada naskah melewati batas waktu. Kuning: hampir jatuh tempo. Klik angka untuk membuka daftar naskah."
+
+msgid "mjcp.stage.submission"
+msgstr "Submission"
+
+msgid "mjcp.stage.reviewRound"
+msgstr "Review round {$round}"
+
+msgid "mjcp.stage.authorRevision"
+msgstr "Revisi penulis"
+
+msgid "mjcp.stage.copyediting"
+msgstr "Copyediting"
+
+msgid "mjcp.stage.production"
+msgstr "Produksi"
+
+msgid "mjcp.stage.published"
+msgstr "Terbit"
+
+msgid "mjcp.stage.declined"
+msgstr "Ditolak"
+
+msgid "mjcp.bottleneck.title"
+msgstr "Naskah Macet"
+
+msgid "mjcp.bottleneck.subtitle"
+msgstr "Daftar naskah yang melewati atau hampir mencapai ambang batas waktu tahap editorial."
+
+msgid "mjcp.bottleneck.almostDue"
+msgstr "Hampir"
+
+msgid "mjcp.bottleneck.overdueDays"
+msgstr "+{$days} hari"
+
+msgid "mjcp.bottleneck.copyeditingOverdue"
+msgstr "H+{$days} akhir bulan"
+
+msgid "mjcp.bottleneck.copyeditingRemaining"
+msgstr "H-{$days} akhir bulan"
+
+msgid "mjcp.bottleneck.footnote"
+msgstr "Diurutkan dari keterlambatan terlama. Batas waktu mengikuti pengaturan yang sama dengan Editorial Reminder Dashboard."
+
+msgid "mjcp.table.code"
+msgstr "Kode"
+
+msgid "mjcp.table.title"
+msgstr "Judul"
+
+msgid "mjcp.table.journal"
+msgstr "Jurnal"
+
+msgid "mjcp.table.stage"
+msgstr "Tahap"
+
+msgid "mjcp.table.stageEntry"
+msgstr "Masuk tahap"
+
+msgid "mjcp.table.duration"
+msgstr "Lama"
+
+msgid "mjcp.table.overdue"
+msgstr "Terlambat"
+
+msgid "mjcp.journals.title"
+msgstr "Jurnal Terhubung"
+
+msgid "mjcp.journals.subtitle"
+msgstr "Daftar seluruh jurnal dalam rumah jurnal {$house}."
+
+msgid "mjcp.journals.lastSync"
+msgstr "Sinkronisasi terakhir"
+
+msgid "mjcp.journals.activeSubmissions"
+msgstr "Naskah aktif"
+
+msgid "mjcp.journals.status.connected"
+msgstr "Terhubung"
+
+msgid "mjcp.journals.status.pending"
+msgstr "Tertunda"
+
+msgid "mjcp.journals.status.failed"
+msgstr "Gagal"
+
+msgid "mjcp.journals.syncNow"
+msgstr "Sinkronkan"
+
+msgid "mjcp.journals.footnote"
+msgstr "Panel ini menghubungkan seluruh jurnal dalam satu rumah jurnal. Klik Buka OJS untuk langsung ke jurnal terkait."
+
+msgid "mjcp.issue.title"
+msgstr "Kesehatan Issue"
+
+msgid "mjcp.issue.subtitle"
+msgstr "Kesiapan kuota dan naskah untuk issue target berikutnya per jurnal."
+
+msgid "mjcp.issue.targetIssue"
+msgstr "Issue target"
+
+msgid "mjcp.issue.quota"
+msgstr "Kuota"
+
+msgid "mjcp.issue.plotted"
+msgstr "Diplot"
+
+msgid "mjcp.issue.ready"
+msgstr "Siap terbit"
+
+msgid "mjcp.issue.inProgress"
+msgstr "Dalam proses"
+
+msgid "mjcp.issue.onTrack"
+msgstr "Sesuai"
+
+msgid "mjcp.issue.underQuota"
+msgstr "Kurang {$count}"
+
+msgid "mjcp.issue.overQuota"
+msgstr "Lebih {$count}"
+
+msgid "mjcp.issue.readyOfQuota"
+msgstr "Siap {$count} dari kuota {$quota}"
+
+msgid "mjcp.issue.plottedOfQuota"
+msgstr "Diplot {$count} dari kuota {$quota}"
+
+msgid "mjcp.issue.footnote"
+msgstr "Siap = LOA dan copyediting selesai. Peringatan muncul bila kurang atau melebihi kuota."
+
+msgid "mjcp.performance.title"
+msgstr "Kinerja Jurnal"
+
+msgid "mjcp.performance.subtitle"
+msgstr "Tren bulanan naskah masuk vs terbit dan indikator kinerja utama (KPI)."
+
+msgid "mjcp.performance.chartHeading"
+msgstr "Naskah masuk vs terbit per bulan"
+
+msgid "mjcp.performance.chartLegend"
+msgstr "Gelap: masuk. Terang: terbit."
+
+msgid "mjcp.performance.avgTurnaround"
+msgstr "Rata-rata submit sampai terbit"
+
+msgid "mjcp.performance.acceptanceRate"
+msgstr "Tingkat penerimaan"
+
+msgid "mjcp.performance.rejectionRate"
+msgstr "Tingkat penolakan"
+
+msgid "mjcp.performance.onTimeRate"
+msgstr "Tepat waktu per tahap"
+
+msgid "mjcp.performance.month"
+msgstr "Bulan"
+
+msgid "mjcp.performance.submitted"
+msgstr "Naskah masuk"
+
+msgid "mjcp.performance.accepted"
+msgstr "Diterima (Accepted)"
+
+msgid "mjcp.performance.rejected"
+msgstr "Ditolak (Rejected)"
+
+msgid "mjcp.performance.published"
+msgstr "Terbit (Published)"
+
+msgid "mjcp.payment.title"
+msgstr "Status Pembayaran Artikel"
+
+msgid "mjcp.payment.subtitle"
+msgstr "Manajemen verifikasi pembayaran penulis, nominal, keterangan, dan bukti transfer."
+
+msgid "mjcp.payment.restrictedBanner"
+msgstr "Akses terbatas: hanya username terdaftar (Journal Manager dan Admin Keuangan) yang dapat melihat halaman ini. Perubahan data oleh Admin Keuangan."
+
+msgid "mjcp.payment.filter.all"
+msgstr "Semua naskah"
+
+msgid "mjcp.payment.filter.formUnfilled"
+msgstr "Form belum diisi"
+
+msgid "mjcp.payment.filter.formUnverified"
+msgstr "Form terisi, belum diverifikasi"
+
+msgid "mjcp.payment.filter.loaUnpaid"
+msgstr "LOA tapi belum bayar"
+
+msgid "mjcp.payment.filter.paidNotCopyediting"
+msgstr "Sudah bayar tapi belum copyediting"
+
+msgid "mjcp.payment.filter.paidUnpublished"
+msgstr "Bayar tapi belum terbit"
+
+msgid "mjcp.payment.importExcelBtn"
+msgstr "Impor Excel / CSV"
+
+msgid "mjcp.payment.author"
+msgstr "Penulis"
+
+msgid "mjcp.payment.formStatus"
+msgstr "Form"
+
+msgid "mjcp.payment.formFilled"
+msgstr "Sudah diisi"
+
+msgid "mjcp.payment.formUnfilled"
+msgstr "Belum diisi"
+
+msgid "mjcp.payment.status"
+msgstr "Status bayar"
+
+msgid "mjcp.payment.status.paid"
+msgstr "Sudah"
+
+msgid "mjcp.payment.status.unpaid"
+msgstr "Belum"
+
+msgid "mjcp.payment.amount"
+msgstr "Nominal"
+
+msgid "mjcp.payment.amountLabel"
+msgstr "Nominal (Rp)"
+
+msgid "mjcp.payment.notes"
+msgstr "Keterangan"
+
+msgid "mjcp.payment.notesOptional"
+msgstr "Keterangan (opsional)"
+
+msgid "mjcp.payment.proof"
+msgstr "Bukti"
+
+msgid "mjcp.payment.save"
+msgstr "Simpan"
+
+msgid "mjcp.payment.sendLink"
+msgstr "Kirim link"
+
+msgid "mjcp.payment.viewSubmission"
+msgstr "Lihat isian"
+
+msgid "mjcp.payment.card.paid"
+msgstr "Sudah bayar"
+
+msgid "mjcp.payment.card.unpaid"
+msgstr "Belum bayar"
+
+msgid "mjcp.payment.card.formUnfilled"
+msgstr "Form belum diisi"
+
+msgid "mjcp.payment.footnote"
+msgstr "Kolom Penulis dan Bukti diambil otomatis dari isian form penulis, tanpa input ulang."
+
+msgid "mjcp.payment.recapHeading"
+msgstr "Rekap Pembayaran per Jurnal"
+
+msgid "mjcp.payment.detailTitle"
+msgstr "Isian Penulis: {$id}"
+
+msgid "mjcp.payment.detailSubtitle"
+msgstr "{$journal}. Dibuka dari Lihat isian pada halaman Pembayaran."
+
+msgid "mjcp.payment.submittedByAuthorHeading"
+msgstr "Dikirim oleh penulis ({$date})"
+
+msgid "mjcp.payment.submittedByAuthorEmpty"
+msgstr "Form belum diisi oleh penulis"
+
+msgid "mjcp.payment.verificationHeading"
+msgstr "Verifikasi (Admin Keuangan)"
+
+msgid "mjcp.payment.replaceProofOptional"
+msgstr "Unggah / Ganti Bukti Pembayaran (opsional; JPG, PNG, PDF maks 1 MB)"
+
+msgid "mjcp.payment.historyHeading"
+msgstr "Riwayat perubahan"
+
+msgid "mjcp.payment.jmReadOnlyNotice"
+msgstr "Journal Manager hanya dapat melihat, tanpa tombol Simpan."
+
+msgid "mjcp.payment.savedSuccess"
+msgstr "Data verifikasi pembayaran berhasil disimpan dan dicatat pada riwayat."
+
+msgid "mjcp.payment.error.articleNotFound"
+msgstr "Naskah tidak ditemukan pada basis data ringkasan."
+
+msgid "mjcp.payment.workflowWarningUnpaid"
+msgstr "Peringatan Multi-Journal Control Panel: Naskah #{$id} masih berstatus bayar 'Belum'."
+
+msgid "mjcp.payment.import.modalTitle"
+msgstr "Input Massal & Impor Pembayaran (Excel / CSV)"
+
+msgid "mjcp.payment.import.instructions"
+msgstr "Unggah file Excel (.xlsx) atau CSV (.csv), atau tempel baris CSV dengan format: kode_artikel, status_bayar (Belum/Sudah), nominal, keterangan (mis: 2038, Sudah, 1500000, Lunas atau 2090, Sudah, 0, FREE)."
+
+msgid "mjcp.payment.import.fileLabel"
+msgstr "Unggah file Excel (.xlsx) atau CSV (.csv) (opsional)"
+
+msgid "mjcp.payment.import.placeholder"
+msgstr "2038, Sudah, 1500000, Lunas\n2090, Sudah, 0, FREE"
+
+msgid "mjcp.payment.import.validationCol"
+msgstr "Validasi"
+
+msgid "mjcp.payment.import.okBadge"
+msgstr "OK"
+
+msgid "mjcp.payment.import.previewBtn"
+msgstr "Pratinjau & Validasi"
+
+msgid "mjcp.payment.import.commitBtn"
+msgstr "Simpan Data Valid"
+
+msgid "mjcp.payment.import.errorInvalidCode"
+msgstr "Kode artikel tidak valid"
+
+msgid "mjcp.payment.import.errorArticleNotFound"
+msgstr "Kode artikel tidak ditemukan"
+
+msgid "mjcp.payment.import.errorInvalidAmount"
+msgstr "Nominal bukan angka"
+
+msgid "mjcp.links.title"
+msgstr "Link Form Penulis"
+
+msgid "mjcp.links.subtitle"
+msgstr "Daftar naskah accepted beserta link konfirmasi unik untuk penulis."
+
+msgid "mjcp.links.generateSelectedBtn"
+msgstr "Buat link untuk naskah terpilih"
+
+msgid "mjcp.links.exportLinksBtn"
+msgstr "Ekspor daftar link"
+
+msgid "mjcp.links.filterUnfilledBtn"
+msgstr "Form belum diisi ({$count})"
+
+msgid "mjcp.links.loaStatus"
+msgstr "LOA"
+
+msgid "mjcp.links.publicationStatus"
+msgstr "Publikasi"
+
+msgid "mjcp.links.url"
+msgstr "Link"
+
+msgid "mjcp.links.expiresAt"
+msgstr "Berlaku sampai"
+
+msgid "mjcp.links.copyBtn"
+msgstr "Salin"
+
+msgid "mjcp.links.copied"
+msgstr "Tersalin!"
+
+msgid "mjcp.links.createBtn"
+msgstr "Buat link"
+
+msgid "mjcp.links.deactivateBtn"
+msgstr "Nonaktifkan"
+
+msgid "mjcp.links.notCreated"
+msgstr "Belum dibuat"
+
+msgid "mjcp.links.generatedSuccess"
+msgstr "{$count} link unik penulis berhasil dibuat."
+
+msgid "mjcp.links.revokedSuccess"
+msgstr "Link penulis berhasil dinonaktifkan."
+
+msgid "mjcp.links.footnote"
+msgstr "Link berisi token unik yang sulit ditebak, memiliki masa berlaku, dan dapat dinonaktifkan atau dibuat ulang."
+
+msgid "mjcp.loa.cardHeading"
+msgstr "LOA (diunggah Journal Manager)"
+
+msgid "mjcp.loa.numberLabel"
+msgstr "Nomor LOA"
+
+msgid "mjcp.loa.numberPlaceholder"
+msgstr "Masukkan nomor atau kode LOA"
+
+msgid "mjcp.loa.fileLabel"
+msgstr "File LOA (PDF)"
+
+msgid "mjcp.loa.visibilityNote"
+msgstr "LOA tampil ke penulis dan dapat divalidasi setelah status bayar Sudah. Status saat ini:"
+
+msgid "mjcp.loa.uploadBtn"
+msgstr "Unggah LOA"
+
+msgid "mjcp.loa.download"
+msgstr "Unduh LOA"
+
+msgid "mjcp.loa.validateBtn"
+msgstr "Validasi LOA"
+
+msgid "mjcp.loa.status.uploaded"
+msgstr "Sudah diunggah"
+
+msgid "mjcp.loa.status.notUploaded"
+msgstr "Belum diunggah"
+
+msgid "mjcp.loa.status.locked"
+msgstr "Terkunci"
+
+msgid "mjcp.loa.status.available"
+msgstr "Tersedia"
+
+msgid "mjcp.loa.savedSuccess"
+msgstr "File dan nomor LOA berhasil disimpan serta dicatat pada riwayat."
+
+msgid "mjcp.loa.error.numberRequired"
+msgstr "Nomor LOA wajib diisi."
+
+msgid "mjcp.loa.error.fileRequired"
+msgstr "File LOA berformat PDF wajib dipilih."
+
+msgid "mjcp.loa.error.invalidPdf"
+msgstr "File LOA harus berformat PDF yang valid (maksimal 10 MB)."
+
+msgid "mjcp.loa.error.accessLocked"
+msgstr "LOA belum dapat diunduh karena pembayaran Anda belum diverifikasi oleh Admin Keuangan."
+
+msgid "mjcp.loa.error.fileNotFound"
+msgstr "File LOA belum tersedia."
+
+msgid "mjcp.loa.validation.pageTitle"
+msgstr "Validasi Letter of Acceptance (LOA)"
+
+msgid "mjcp.loa.validation.subtitle"
+msgstr "Periksa keaslian nomor atau kode Letter of Acceptance (LOA) jurnal."
+
+msgid "mjcp.loa.validation.searchBtn"
+msgstr "Cek Nomor LOA"
+
+msgid "mjcp.loa.validation.validBadge"
+msgstr "LOA Valid & Terverifikasi"
+
+msgid "mjcp.loa.validation.notFound"
+msgstr "Nomor LOA tidak ditemukan atau pembayaran naskah terkait belum terverifikasi."
+
+msgid "mjcp.loa.validation.dateIssued"
+msgstr "Tanggal LOA"
+
+msgid "mjcp.publication.status.published"
+msgstr "Terbit"
+
+msgid "mjcp.publication.status.unpublished"
+msgstr "Belum terbit"
+
+msgid "mjcp.authorForm.title"
+msgstr "Halaman Naskah Anda"
+
+msgid "mjcp.authorForm.subtitlePending"
+msgstr "Naskah Anda telah diterima. Lengkapi konfirmasi pembayaran di bawah; LOA dan link publikasi akan muncul di halaman ini."
+
+msgid "mjcp.authorForm.subtitleVerified"
+msgstr "Pembayaran Anda sudah diverifikasi."
+
+msgid "mjcp.authorForm.section1Title"
+msgstr "1. Konfirmasi pembayaran"
+
+msgid "mjcp.authorForm.verifiedBadge"
+msgstr "Terverifikasi"
+
+msgid "mjcp.authorForm.submittedSuccessBanner"
+msgstr "Terima kasih! Isian konfirmasi pembayaran Anda telah diterima dan sedang menunggu verifikasi Admin Keuangan."
+
+msgid "mjcp.authorForm.manuscriptId"
+msgstr "ID Naskah"
+
+msgid "mjcp.authorForm.journalChoice"
+msgstr "Pilihan Jurnal"
+
+msgid "mjcp.authorForm.articleTitle"
+msgstr "Judul Artikel"
+
+msgid "mjcp.authorForm.fullNameAuthors"
+msgstr "Nama Lengkap Penulis"
+
+msgid "mjcp.authorForm.affiliation"
+msgstr "Institusi / Afiliasi"
+
+msgid "mjcp.authorForm.correspondentEmail"
+msgstr "Email Korespondensi"
+
+msgid "mjcp.authorForm.whatsappNumber"
+msgstr "Nomor WhatsApp"
+
+msgid "mjcp.authorForm.transferProofLabel"
+msgstr "Bukti Transfer"
+
+msgid "mjcp.authorForm.transferProof"
+msgstr "Bukti Transfer (opsional; JPG, PNG, atau PDF, maks 1 MB)"
+
+msgid "mjcp.authorForm.testimonial"
+msgstr "Testimoni (wajib diisi)"
+
+msgid "mjcp.authorForm.consentText"
+msgstr "Saya setuju testimoni ini dapat dipublikasikan di media sosial jurnal beserta nama dan institusi saya. (wajib)"
+
+msgid "mjcp.authorForm.consentWithdrawNote"
+msgstr "Anda dapat menarik persetujuan kapan saja dengan menghubungi pengelola jurnal."
+
+msgid "mjcp.authorForm.submit"
+msgstr "Kirim"
+
+msgid "mjcp.authorForm.section2Title"
+msgstr "2. LOA / Letter of Acceptance"
+
+msgid "mjcp.authorForm.loaLockedNote"
+msgstr "LOA tersedia setelah pembayaran Anda diverifikasi."
+
+msgid "mjcp.authorForm.loaValidationHint"
+msgstr "Validasi LOA membuka halaman Validasi LOA di web jurnal."
+
+msgid "mjcp.authorForm.section3Title"
+msgstr "3. Link publikasi"
+
+msgid "mjcp.authorForm.publicationPendingNote"
+msgstr "Tautan artikel akan muncul di sini setelah artikel terbit."
+
+msgid "mjcp.authorForm.articleLinkLabel"
+msgstr "Artikel"
+
+msgid "mjcp.authorForm.doiLabel"
+msgstr "DOI"
+
+msgid "mjcp.authorForm.footerNote"
+msgstr "Setelah dikirim, Anda akan melihat pesan konfirmasi yang menyatakan isian telah diterima."
+
+msgid "mjcp.authorForm.submittedDateLabel"
+msgstr "Dikirim"
+
+msgid "mjcp.authorForm.error.tokenInvalidOrExpired"
+msgstr "Tautan halaman penulis ini tidak valid, sudah kedaluwarsa, atau telah dinonaktifkan. Silakan hubungi pengelola jurnal untuk mendapatkan tautan baru."
+
+msgid "mjcp.authorForm.error.fullNameRequired"
+msgstr "Nama lengkap penulis wajib diisi."
+
+msgid "mjcp.authorForm.error.affiliationRequired"
+msgstr "Institusi penulis wajib diisi."
+
+msgid "mjcp.authorForm.error.invalidEmail"
+msgstr "Format email korespondensi tidak valid."
+
+msgid "mjcp.authorForm.error.invalidWhatsapp"
+msgstr "Format nomor WhatsApp tidak valid (gunakan angka, minimal 8 digit)."
+
+msgid "mjcp.authorForm.error.testimonialRequired"
+msgstr "Testimoni wajib diisi sebelum form dapat dikirim."
+
+msgid "mjcp.authorForm.error.consentRequired"
+msgstr "Kotak persetujuan publikasi testimoni wajib dicentang."
+
+msgid "mjcp.authorForm.error.fileUploadError"
+msgstr "Terjadi kesalahan saat mengunggah file bukti transfer."
+
+msgid "mjcp.authorForm.submittedSuccess"
+msgstr "Konfirmasi pembayaran Anda berhasil dikirim."
+
+msgid "mjcp.upload.error.fileTooLarge"
+msgstr "Ukuran file melebihi batas maksimal ({$maxKb} KB / 1 MB)."
+
+msgid "mjcp.upload.error.invalidProofFormat"
+msgstr "Format file tidak didukung. Gunakan file JPG, PNG, atau PDF."
+
+msgid "mjcp.upload.error.storageFailed"
+msgstr "Gagal menyimpan file ke penyimpanan privat server."
+
+msgid "mjcp.upload.error.fileNotFound"
+msgstr "File bukti pembayaran tidak ditemukan."
+
+msgid "mjcp.testimonial.title"
+msgstr "Testimoni Penulis"
+
+msgid "mjcp.testimonial.subtitle"
+msgstr "Daftar testimoni penulis dari form konfirmasi beserta status persetujuan publikasi."
+
+msgid "mjcp.testimonial.exportApprovedBtn"
+msgstr "Ekspor testimoni disetujui"
+
+msgid "mjcp.testimonial.text"
+msgstr "Testimoni"
+
+msgid "mjcp.testimonial.authorName"
+msgstr "Nama"
+
+msgid "mjcp.testimonial.institution"
+msgstr "Institusi"
+
+msgid "mjcp.testimonial.consentStatus"
+msgstr "Persetujuan"
+
+msgid "mjcp.testimonial.submittedAt"
+msgstr "Waktu"
+
+msgid "mjcp.testimonial.status.approved"
+msgstr "Disetujui"
+
+msgid "mjcp.testimonial.status.withdrawn"
+msgstr "Persetujuan ditarik"
+
+msgid "mjcp.testimonial.status.approvedFull"
+msgstr "Disetujui dipublikasikan"
+
+msgid "mjcp.testimonial.withdrawAction"
+msgstr "Tarik persetujuan"
+
+msgid "mjcp.testimonial.restoreAction"
+msgstr "Pulihkan persetujuan"
+
+msgid "mjcp.testimonial.footnote"
+msgstr "Testimoni dan persetujuan wajib diisi pada form; testimoni yang persetujuannya ditarik penulis tidak masuk daftar publikasi media sosial."
+
+msgid "mjcp.settings.title"
+msgstr "Pengaturan"
+
+msgid "mjcp.settings.subtitle"
+msgstr "Konfigurasi ambang batas waktu, peran, akses pembayaran, kuota issue, hari libur, dan sinkronisasi."
+
+msgid "mjcp.settings.thresholdsHeading"
+msgstr "Batas waktu per tahap"
+
+msgid "mjcp.settings.round1LimitLabel"
+msgstr "Review round 1 (hari kerja, 14-21)"
+
+msgid "mjcp.settings.round2LimitLabel"
+msgstr "Review round 2 dst (hari kerja)"
+
+msgid "mjcp.settings.copyeditingWarningLabel"
+msgstr "Reminder copyediting (H-)"
+
+msgid "mjcp.settings.rolesHeading"
+msgstr "Akses dan peran"
+
+msgid "mjcp.settings.role.director"
+msgstr "Direksi"
+
+msgid "mjcp.settings.role.directorDesc"
+msgstr "Dashboard, tanpa pembayaran"
+
+msgid "mjcp.settings.role.jm"
+msgstr "Journal Manager"
+
+msgid "mjcp.settings.role.jmDesc"
+msgstr "Dashboard, pembayaran (lihat)"
+
+msgid "mjcp.settings.role.finance"
+msgstr "Admin Keuangan"
+
+msgid "mjcp.settings.role.financeDesc"
+msgstr "Pembayaran (lihat dan ubah)"
+
+msgid "mjcp.settings.role.technical"
+msgstr "Admin Teknis"
+
+msgid "mjcp.settings.role.technicalDesc"
+msgstr "Konfigurasi"
+
+msgid "mjcp.settings.usernamesLabel"
+msgstr "Username"
+
+msgid "mjcp.settings.paymentAccessUsersLabel"
+msgstr "Username berhak akses pembayaran"
+
+msgid "mjcp.settings.authorFormHeading"
+msgstr "Form penulis"
+
+msgid "mjcp.settings.tokenExpDaysLabel"
+msgstr "Masa berlaku link (hari)"
+
+msgid "mjcp.settings.maxUploadSizeLabel"
+msgstr "Ukuran maksimal bukti (MB)"
+
+msgid "mjcp.settings.loaValidationUrlLabel"
+msgstr "URL LOA Validation kustom (opsional)"
+
+msgid "mjcp.settings.houseNameLabel"
+msgstr "Nama Rumah Jurnal"
+
+msgid "mjcp.settings.quotasHeading"
+msgstr "Kuota issue per jurnal"
+
+msgid "mjcp.settings.quotaPerIssue"
+msgstr "Kuota per issue"
+
+msgid "mjcp.settings.holidaysHeading"
+msgstr "Hari libur"
+
+msgid "mjcp.settings.noHolidays"
+msgstr "Belum ada hari libur yang diinput."
+
+msgid "mjcp.settings.addHolidayBtn"
+msgstr "Tambah hari libur"
+
+msgid "mjcp.settings.holidayDescPlaceholder"
+msgstr "Keterangan hari libur"
+
+msgid "mjcp.settings.error.invalidHoliday"
+msgstr "Tanggal dan keterangan hari libur wajib diisi."
+
+msgid "mjcp.settings.syncHeading"
+msgstr "Sinkronisasi"
+
+msgid "mjcp.settings.lastSyncInfo"
+msgstr "Terakhir: {$time}. Status: {$status}."
+
+msgid "mjcp.settings.syncNowBtn"
+msgstr "Sinkronkan sekarang"
+
+msgid "mjcp.settings.auditHeading"
+msgstr "Log Aktivitas & Audit"
+
+msgid "mjcp.audit.timestamp"
+msgstr "Waktu"
+
+msgid "mjcp.audit.user"
+msgstr "Pengguna"
+
+msgid "mjcp.audit.action"
+msgstr "Aksi"
+
+msgid "mjcp.audit.entity"
+msgstr "Entitas"
+
+msgid "mjcp.audit.details"
+msgstr "Detail"
+
+msgid "mjcp.sync.taskName"
+msgstr "Sinkronisasi Terjadwal Multi-Journal Control Panel"
+
+msgid "mjcp.sync.completedSuccess"
+msgstr "Sinkronisasi selesai ({$count} artikel diproses)."
+
+msgid "mjcp.export.excel"
+msgstr "Ekspor Excel"
+
+msgid "mjcp.export.csv"
+msgstr "Ekspor CSV"
+
+msgid "mjcp.export.pdf"
+msgstr "Ekspor PDF"
+
+msgid "mjcp.export.reportTitle"
+msgstr "Judul Laporan"
+
+msgid "mjcp.export.publishingHouse"
+msgstr "Rumah Jurnal"
+
+msgid "mjcp.export.exportedAt"
+msgstr "Tanggal Pembuatan"
+
+msgid "mjcp.export.activeFilters"
+msgstr "Filter Aktif"
+
+msgid "mjcp.export.exportedBy"
+msgstr "Dibuat Oleh"
+
+msgid "mjcp.common.defaultHouseName"
+msgstr "Rumah Jurnal"
+
+msgid "mjcp.common.untitledManuscript"
+msgstr "Naskah #{$id}"
+
+msgid "mjcp.error.invalidCsrf"
+msgstr "Token CSRF tidak valid."
+
+msgid "mjcp.export.totalLabel"
+msgstr "Total"
+
+msgid "mjcp.export.pageOf"
+msgstr "Halaman {$current} / {$total}"
+
+msgid "mjcp.export.filterSummary"
+msgstr "Jurnal: {$journal} | Periode: {$period}"
+
+msgid "mjcp.settings.usernamesPlaceholder"
+msgstr "username1, username2"
+
+msgid "mjcp.settings.workingDaysLabel"
+msgstr "Hari kerja"
+
+msgid "mjcp.settings.workingDaysHint"
+msgstr "Pilih hari kerja aktif (bawaan: Senin sampai Jumat). Hari yang tidak dicentang tidak dihitung dalam durasi tahap."
+
+msgid "mjcp.weekday.1"
+msgstr "Senin"
+
+msgid "mjcp.weekday.2"
+msgstr "Selasa"
+
+msgid "mjcp.weekday.3"
+msgstr "Rabu"
+
+msgid "mjcp.weekday.4"
+msgstr "Kamis"
+
+msgid "mjcp.weekday.5"
+msgstr "Jumat"
+
+msgid "mjcp.weekday.6"
+msgstr "Sabtu"
+
+msgid "mjcp.weekday.7"
+msgstr "Minggu"
+
+msgid "mjcp.authorForm.whatsappPlaceholder"
+msgstr "08xx-xxxx-xxxx"
