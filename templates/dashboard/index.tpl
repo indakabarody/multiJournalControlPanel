@@ -21,6 +21,9 @@
 	data-revoke-token-url="{$navUrls.revokeToken|escape}"
 	data-toggle-testimonial-url="{$navUrls.toggleTestimonialConsent|escape}"
 	data-copied-text="{translate|escape key="mjcp.links.copied"}"
+	data-select-one-text="{translate|escape key="mjcp.links.selectAtLeastOne"}"
+	data-confirm-regenerate-text="{translate|escape key="mjcp.links.confirmRegenerate"}"
+	data-confirm-deactivate-text="{translate|escape key="mjcp.links.confirmDeactivate"}"
 	data-csrf-token="{$csrfToken|escape}">
 
 	{* Top Navigation Bar *}
@@ -116,6 +119,14 @@
 						<option value="365d" {if $activeFilters.period == '365d'}selected{/if}>{translate key="mjcp.common.period365d"}</option>
 					</select>
 
+					<select name="sort" class="mjcp-select mjcp-auto-submit" aria-label="{translate|escape key="mjcp.pipeline.sortLabel"}">
+						<option value="" {if $activeFilters.sort == ''}selected{/if}>{translate key="mjcp.pipeline.sortLabel"}</option>
+						<option value="name_asc" {if $activeFilters.sort == 'name_asc'}selected{/if}>{translate key="mjcp.pipeline.sort.nameAsc"}</option>
+						<option value="name_desc" {if $activeFilters.sort == 'name_desc'}selected{/if}>{translate key="mjcp.pipeline.sort.nameDesc"}</option>
+						<option value="all_desc" {if $activeFilters.sort == 'all_desc'}selected{/if}>{translate key="mjcp.pipeline.sort.allDesc"}</option>
+						<option value="overdue_desc" {if $activeFilters.sort == 'overdue_desc'}selected{/if}>{translate key="mjcp.pipeline.sort.overdueDesc"}</option>
+					</select>
+
 					<input type="search" name="search" class="mjcp-input"
 						value="{$activeFilters.search|escape}"
 						placeholder="{translate|escape key="mjcp.common.search"}" />
@@ -124,23 +135,23 @@
 
 			{* 5 Summary Cards *}
 			<div class="mjcp-cards-grid mjcp-cards-grid--five">
-				<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=all" class="mjcp-card mjcp-card--clickable">
+				<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=all" class="mjcp-card mjcp-card--clickable">
 					<div class="mjcp-card-title">{translate key="mjcp.dashboard.totalArticles"}</div>
 					<div class="mjcp-card-value">{$summary.totalArticles|number_format:0:",":"."}</div>
 				</a>
-				<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=active" class="mjcp-card mjcp-card--clickable">
+				<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=active" class="mjcp-card mjcp-card--clickable">
 					<div class="mjcp-card-title">{translate key="mjcp.dashboard.activeSubmissions"}</div>
 					<div class="mjcp-card-value">{$summary.activeSubmissions|number_format:0:",":"."}</div>
 				</a>
-				<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=overdue" class="mjcp-card mjcp-card--clickable">
+				<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=overdue" class="mjcp-card mjcp-card--clickable">
 					<div class="mjcp-card-title">{translate key="mjcp.dashboard.overdueSubmissions"}</div>
 					<div class="mjcp-card-value mjcp-card-value--danger">{$summary.overdueSubmissions|number_format:0:",":"."}</div>
 				</a>
-				<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=ready" class="mjcp-card mjcp-card--clickable">
+				<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillCard=ready" class="mjcp-card mjcp-card--clickable">
 					<div class="mjcp-card-title">{translate key="mjcp.dashboard.readyToPublish"}</div>
 					<div class="mjcp-card-value">{$summary.readyToPublish|number_format:0:",":"."}</div>
 				</a>
-				<a href="{$navUrls.issues|escape}?contextId={$activeFilters.contextId|escape}" class="mjcp-card mjcp-card--clickable">
+				<a href="{$navUrls.issues|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}" class="mjcp-card mjcp-card--clickable">
 					<div class="mjcp-card-title">{translate key="mjcp.dashboard.issuesBelowQuota"}</div>
 					<div class="mjcp-card-value mjcp-card-value--danger">{$summary.issuesBelowQuota|number_format:0:",":"."}</div>
 				</a>
@@ -161,53 +172,59 @@
 								<th>{translate key="mjcp.pipeline.copyediting"}</th>
 								<th>{translate key="mjcp.pipeline.production"}</th>
 								<th>{translate key="mjcp.pipeline.published"}</th>
+								<th>{translate key="mjcp.pipeline.declined"}</th>
 							</tr>
 						</thead>
 						<tbody>
 							{if empty($pipeline)}
 								<tr>
-									<td colspan="8" class="mjcp-empty-cell">{translate key="mjcp.common.noData"}</td>
+									<td colspan="9" class="mjcp-empty-cell">{translate key="mjcp.common.noData"}</td>
 								</tr>
 							{else}
 								{foreach from=$pipeline item="row"}
 									<tr>
 										<td><strong>{$row.journalName|escape}</strong></td>
 										<td>
-											<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=all" class="mjcp-cell-link mjcp-cell-link--bold">
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=all" class="mjcp-cell-link mjcp-cell-link--bold">
 												{$row.allArticle|escape}
 											</a>
 										</td>
 										<td>
-											<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=submission" class="mjcp-cell-link">
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=submission" class="mjcp-cell-link">
 												{$row.submission|escape}
 											</a>
 										</td>
 										<td>
-											<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=review"
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=review"
 												class="mjcp-cell-link {if $row.reviewDelayBadge == 'danger'}mjcp-badge mjcp-badge-danger{elseif $row.reviewDelayBadge == 'warning'}mjcp-badge mjcp-badge-warning{/if}">
 												{$row.review|escape}
 											</a>
 										</td>
 										<td>
-											<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=revision"
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=revision"
 												class="mjcp-cell-link {if $row.revisionDelayBadge == 'danger'}mjcp-badge mjcp-badge-danger{elseif $row.revisionDelayBadge == 'warning'}mjcp-badge mjcp-badge-warning{/if}">
 												{$row.revision|escape}
 											</a>
 										</td>
 										<td>
-											<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=copyediting"
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=copyediting"
 												class="mjcp-cell-link {if $row.copyeditingDelayBadge == 'danger'}mjcp-badge mjcp-badge-danger{elseif $row.copyeditingDelayBadge == 'warning'}mjcp-badge mjcp-badge-warning{/if}">
 												{$row.copyediting|escape}
 											</a>
 										</td>
 										<td>
-											<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=production" class="mjcp-cell-link">
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=production" class="mjcp-cell-link">
 												{$row.production|escape}
 											</a>
 										</td>
 										<td>
-											<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=published" class="mjcp-cell-link">
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=published" class="mjcp-cell-link">
 												{$row.published|escape}
+											</a>
+										</td>
+										<td>
+											<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}&amp;drillContextId={$row.contextId|escape}&amp;drillBucket=declined" class="mjcp-cell-link">
+												{$row.declined|escape}
 											</a>
 										</td>
 									</tr>
@@ -224,7 +241,7 @@
 				<div class="mjcp-panel-box mjcp-drilldown-box">
 					<div class="mjcp-box-header">
 						<h2 class="mjcp-box-title">{translate key="mjcp.dashboard.drilldownHeading"} ({$drilldownItems|@count})</h2>
-						<a href="{$navUrls.dashboard|escape}?contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}" class="mjcp-btn mjcp-btn--outline mjcp-btn--sm">
+						<a href="{$navUrls.dashboard|escape}{$querySep|escape}contextId={$activeFilters.contextId|escape}&amp;period={$activeFilters.period|escape}" class="mjcp-btn mjcp-btn--outline mjcp-btn--sm">
 							{translate key="mjcp.common.close"}
 						</a>
 					</div>
@@ -303,6 +320,10 @@
 						<option value="180d" {if $activeFilters.period == '180d'}selected{/if}>{translate key="mjcp.common.period180d"}</option>
 						<option value="365d" {if $activeFilters.period == '365d'}selected{/if}>{translate key="mjcp.common.period365d"}</option>
 					</select>
+
+					<input type="search" name="search" class="mjcp-input"
+						value="{$activeFilters.search|escape}"
+						placeholder="{translate|escape key="mjcp.common.search"}" />
 				</div>
 			</form>
 
@@ -363,15 +384,17 @@
 					<h1 class="mjcp-title">{translate key="mjcp.journals.title"}</h1>
 					<p class="mjcp-subtitle">{translate key="mjcp.journals.subtitle" house=$houseName|escape}</p>
 				</div>
-				<div>
-					<form method="POST" action="{$navUrls.sync|escape}" class="mjcp-inline-form">
-						<input type="hidden" name="csrfToken" value="{$csrfToken|escape}" />
-						<input type="hidden" name="returnTab" value="journals" />
-						<button type="submit" class="mjcp-btn mjcp-btn--primary">
-							{translate key="mjcp.settings.syncNowBtn"}
-						</button>
-					</form>
-				</div>
+				{if $perms.canTriggerSync}
+					<div>
+						<form method="POST" action="{$navUrls.sync|escape}" class="mjcp-inline-form">
+							<input type="hidden" name="csrfToken" value="{$csrfToken|escape}" />
+							<input type="hidden" name="returnTab" value="journals" />
+							<button type="submit" class="mjcp-btn mjcp-btn--primary">
+								{translate key="mjcp.settings.syncNowBtn"}
+							</button>
+						</form>
+					</div>
+				{/if}
 			</div>
 
 			<div class="mjcp-panel-box">
@@ -408,9 +431,11 @@
 											<a href="{$cj.openOjsUrl|escape}" class="mjcp-link">
 												{translate key="mjcp.common.openOjs"}
 											</a>
-											<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-sync-journal-btn" data-context-id="{$cj.contextId|escape}">
-												{translate key="mjcp.journals.syncNow"}
-											</button>
+											{if $perms.canTriggerSync}
+												<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-sync-journal-btn" data-context-id="{$cj.contextId|escape}">
+													{translate key="mjcp.journals.syncNow"}
+												</button>
+											{/if}
 										</td>
 									</tr>
 								{/foreach}
@@ -458,11 +483,34 @@
 							<div class="mjcp-progress-track">
 								<div class="mjcp-progress-fill" data-width="{$ih.progressPct|escape}"></div>
 							</div>
+							<div class="mjcp-issue-card__timeliness">
+								<span class="mjcp-muted">{translate key="mjcp.issue.targetDateLabel" date=$ih.targetDateFormatted|escape}</span>
+								<span class="mjcp-badge mjcp-badge-{$ih.timelinessBadgeType|escape}">{$ih.timelinessLabel|escape}</span>
+							</div>
 							<div class="mjcp-issue-card__meta">
 								<span>{translate key="mjcp.links.loaStatus"}: {$ih.loaUploadedCount|escape}/{$ih.plottedCount|escape}</span>
 								<span>{translate key="mjcp.pipeline.copyediting"}: {$ih.copyeditingDoneCount|escape}/{$ih.plottedCount|escape}</span>
 								<span>{translate key="mjcp.pipeline.published"}: {$ih.publishedCount|escape}/{$ih.plottedCount|escape}</span>
 							</div>
+							{if !empty($ih.articles)}
+								<details class="mjcp-issue-articles">
+									<summary class="mjcp-issue-articles__summary">
+										{translate key="mjcp.issue.articlesToggle" count=$ih.articles|@count}
+									</summary>
+									<ul class="mjcp-issue-articles__list">
+										{foreach from=$ih.articles item="iArt"}
+											<li class="mjcp-issue-articles__item">
+												<span class="mjcp-issue-articles__title">#{$iArt.submissionId|escape} {$iArt.title|escape}</span>
+												<span class="mjcp-issue-articles__badges">
+													<span class="mjcp-badge {if $iArt.loaStatus == 'uploaded'}mjcp-badge-success{else}mjcp-badge-warning{/if}">{translate key="mjcp.links.loaStatus"}: {$iArt.loaLabel|escape}</span>
+													<span class="mjcp-badge {if $iArt.copyeditingDone}mjcp-badge-success{else}mjcp-badge-warning{/if}">{translate key="mjcp.pipeline.copyediting"}: {$iArt.copyeditingLabel|escape}</span>
+													<span class="mjcp-badge {if $iArt.isPublished}mjcp-badge-success{else}mjcp-badge-warning{/if}">{$iArt.publishedLabel|escape}</span>
+												</span>
+											</li>
+										{/foreach}
+									</ul>
+								</details>
+							{/if}
 						</div>
 					{/foreach}
 				{/if}
@@ -554,6 +602,105 @@
 				</div>
 			</div>
 
+			{* Per-Stage On-Time vs Overdue Breakdown *}
+			{if !empty($performance.stageOnTimeStats)}
+				<div class="mjcp-panel-box">
+					<h2 class="mjcp-box-title">{translate key="mjcp.performance.stageOnTimeHeading"}</h2>
+					<div class="mjcp-table-responsive">
+						<table class="mjcp-table">
+							<thead>
+								<tr>
+									<th>{translate key="mjcp.table.stage"}</th>
+									<th>{translate key="mjcp.performance.onTimeCount"}</th>
+									<th>{translate key="mjcp.performance.overdueCount"}</th>
+									<th>{translate key="mjcp.performance.onTimePct"}</th>
+									<th>{translate key="mjcp.performance.overduePct"}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{foreach from=$performance.stageOnTimeStats item="stRow"}
+									<tr>
+										<td><strong>{$stRow.stageLabel|escape}</strong></td>
+										<td>{$stRow.onTimeCount|escape}</td>
+										<td>{$stRow.overdueCount|escape}</td>
+										<td><span class="mjcp-badge mjcp-badge-success">{$stRow.onTimePct|escape}%</span></td>
+										<td><span class="mjcp-badge {if $stRow.overduePct > 0}mjcp-badge-danger{else}mjcp-badge-success{/if}">{$stRow.overduePct|escape}%</span></td>
+									</tr>
+								{/foreach}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			{/if}
+
+			{* Monthly Trend Details Table *}
+			{if !empty($performance.monthlyTrends)}
+				<div class="mjcp-panel-box">
+					<h2 class="mjcp-box-title">{translate key="mjcp.performance.monthlyTableHeading"}</h2>
+					<div class="mjcp-table-responsive">
+						<table class="mjcp-table">
+							<thead>
+								<tr>
+									<th>{translate key="mjcp.performance.month"}</th>
+									<th>{translate key="mjcp.performance.submitted"}</th>
+									<th>{translate key="mjcp.performance.accepted"}</th>
+									<th>{translate key="mjcp.performance.rejected"}</th>
+									<th>{translate key="mjcp.performance.published"}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{foreach from=$performance.monthlyTrends item="mtRow"}
+									<tr>
+										<td><strong>{$mtRow.label|escape} ({$mtRow.ym|escape})</strong></td>
+										<td>{$mtRow.submitted|escape}</td>
+										<td>{$mtRow.accepted|escape}</td>
+										<td>{$mtRow.rejected|escape}</td>
+										<td>{$mtRow.published|escape}</td>
+									</tr>
+								{/foreach}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			{/if}
+
+			{* Cross-Journal Comparison Table *}
+			{if !empty($performance.journalComparison)}
+				<div class="mjcp-panel-box">
+					<h2 class="mjcp-box-title">{translate key="mjcp.performance.comparisonHeading"}</h2>
+					<div class="mjcp-table-responsive">
+						<table class="mjcp-table">
+							<thead>
+								<tr>
+									<th>{translate key="mjcp.table.journal"}</th>
+									<th>{translate key="mjcp.performance.submitted"}</th>
+									<th>{translate key="mjcp.performance.accepted"}</th>
+									<th>{translate key="mjcp.performance.rejected"}</th>
+									<th>{translate key="mjcp.performance.published"}</th>
+									<th>{translate key="mjcp.performance.acceptanceRate"}</th>
+									<th>{translate key="mjcp.performance.avgTurnaround"}</th>
+									<th>{translate key="mjcp.performance.onTimeRate"}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{foreach from=$performance.journalComparison item="jcRow"}
+									<tr>
+										<td><strong>{$jcRow.journalName|escape}</strong></td>
+										<td>{$jcRow.submitted|escape}</td>
+										<td>{$jcRow.accepted|escape}</td>
+										<td>{$jcRow.rejected|escape}</td>
+										<td>{$jcRow.published|escape}</td>
+										<td>{$jcRow.acceptanceRate|escape}%</td>
+										<td>{$jcRow.avgTurnaroundDays|escape} {translate key="mjcp.common.days"}</td>
+										<td>{$jcRow.onTimeRate|escape}%</td>
+									</tr>
+								{/foreach}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			{/if}
+
 		{* ===================================================================== *}
 		{* TAB 8: AUTHOR FORM LINKS                                              *}
 		{* ===================================================================== *}
@@ -573,11 +720,24 @@
 					<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-export-trigger" data-module="links" data-format="xlsx">
 						{translate key="mjcp.links.exportLinksBtn"}
 					</button>
-					<a href="{$navUrls.authorLinks|escape}{if !$unfilledOnly}?unfilledOnly=1{/if}"
+					<a href="{$navUrls.authorLinks|escape}{if !$unfilledOnly}{$querySep|escape}unfilledOnly=1&amp;contextId={$activeFilters.contextId|escape}{else}{$querySep|escape}contextId={$activeFilters.contextId|escape}{/if}"
 						class="mjcp-btn {if $unfilledOnly}mjcp-btn--primary{else}mjcp-btn--outline{/if}">
 						{translate key="mjcp.links.filterUnfilledBtn" count=$unfilledLinksCount}
 					</a>
 				</div>
+				<form id="mjcpFilterForm" method="GET" action="{$navUrls.authorLinks|escape}" class="mjcp-filter">
+					{if $unfilledOnly}
+						<input type="hidden" name="unfilledOnly" value="1" />
+					{/if}
+					<select name="contextId" class="mjcp-select mjcp-auto-submit" aria-label="{translate|escape key="mjcp.table.journal"}">
+						<option value="all" {if $activeFilters.contextId == 'all'}selected{/if}>
+							{translate key="mjcp.common.allJournals" house=$houseName|escape}
+						</option>
+						{foreach from=$journalsList key="jId" item="jInfo"}
+							<option value="{$jId|escape}" {if $activeFilters.contextId == $jId}selected{/if}>{$jInfo.name|escape}</option>
+						{/foreach}
+					</select>
+				</form>
 			</div>
 
 			<div class="mjcp-panel-box">
@@ -606,7 +766,7 @@
 								{foreach from=$authorLinks item="al"}
 									<tr>
 										<td>
-											<input type="checkbox" class="mjcp-link-row-checkbox" value="{$al.submissionId|escape}" aria-label="{$al.submissionId|escape}" />
+											<input type="checkbox" class="mjcp-link-row-checkbox" value="{$al.submissionId|escape}" data-has-token="{if $al.hasToken}1{else}0{/if}" aria-label="{$al.submissionId|escape}" />
 										</td>
 										<td>{$al.submissionId|escape}</td>
 										<td>{$al.journalName|escape}</td>
@@ -635,15 +795,21 @@
 												<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-copy-link-btn" data-url="{$al.fullLinkUrl|escape}">
 													{translate key="mjcp.links.copyBtn"}
 												</button>
-												{if !$al.formFilled}
-													<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-revoke-token-btn" data-submission-id="{$al.submissionId|escape}">
-														{translate key="mjcp.links.deactivateBtn"}
-													</button>
-												{/if}
+												<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-create-token-btn" data-submission-id="{$al.submissionId|escape}" data-has-token="1">
+													{translate key="mjcp.links.regenerateBtn"}
+												</button>
+												<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-revoke-token-btn" data-submission-id="{$al.submissionId|escape}">
+													{translate key="mjcp.links.deactivateBtn"}
+												</button>
 											{else}
-												<button type="button" class="mjcp-btn mjcp-btn--primary mjcp-btn--xs mjcp-create-token-btn" data-submission-id="{$al.submissionId|escape}">
+												<button type="button" class="mjcp-btn mjcp-btn--primary mjcp-btn--xs mjcp-create-token-btn" data-submission-id="{$al.submissionId|escape}" data-has-token="0">
 													{translate key="mjcp.links.createBtn"}
 												</button>
+											{/if}
+											{if $perms.canManageLoa && $al.manageLoaUrl}
+												<a href="{$al.manageLoaUrl|escape}" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs">
+													{translate key="mjcp.links.manageLoaBtn"}
+												</a>
 											{/if}
 										</td>
 									</tr>
@@ -703,18 +869,20 @@
 											</span>
 										</td>
 										<td class="mjcp-action-cell">
-											{if $tm.isApproved}
-												<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-toggle-testimonial-btn"
-													data-testimonial-id="{$tm.testimonialId|escape}"
-													data-withdraw="1">
-													{translate key="mjcp.testimonial.withdrawAction"}
-												</button>
-											{else}
-												<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-toggle-testimonial-btn"
-													data-testimonial-id="{$tm.testimonialId|escape}"
-													data-withdraw="0">
-													{translate key="mjcp.testimonial.restoreAction"}
-												</button>
+											{if $perms.canManageTestimonials}
+												{if $tm.isApproved}
+													<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-toggle-testimonial-btn"
+														data-testimonial-id="{$tm.testimonialId|escape}"
+														data-withdraw="1">
+														{translate key="mjcp.testimonial.withdrawAction"}
+													</button>
+												{else}
+													<button type="button" class="mjcp-btn mjcp-btn--outline mjcp-btn--xs mjcp-toggle-testimonial-btn"
+														data-testimonial-id="{$tm.testimonialId|escape}"
+														data-withdraw="0">
+														{translate key="mjcp.testimonial.restoreAction"}
+													</button>
+												{/if}
 											{/if}
 										</td>
 									</tr>

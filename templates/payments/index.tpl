@@ -76,27 +76,27 @@
 		{* Quick Filter Pills & Import Excel/CSV Button *}
 		<div class="mjcp-toolbar">
 			<div class="mjcp-pill-group">
-				<a href="{$navUrls.payments|escape}?quickFilter=all&amp;contextId={$activeFilters.contextId|escape}"
+				<a href="{$navUrls.payments|escape}{$querySep|escape}quickFilter=all&amp;contextId={$activeFilters.contextId|escape}"
 					class="mjcp-pill {if $activeQuickFilter == 'all'}mjcp-pill--active{/if}">
 					{translate key="mjcp.payment.filter.all"}
 				</a>
-				<a href="{$navUrls.payments|escape}?quickFilter=form_unfilled&amp;contextId={$activeFilters.contextId|escape}"
+				<a href="{$navUrls.payments|escape}{$querySep|escape}quickFilter=form_unfilled&amp;contextId={$activeFilters.contextId|escape}"
 					class="mjcp-pill {if $activeQuickFilter == 'form_unfilled'}mjcp-pill--active{/if}">
 					{translate key="mjcp.payment.filter.formUnfilled"}
 				</a>
-				<a href="{$navUrls.payments|escape}?quickFilter=form_unverified&amp;contextId={$activeFilters.contextId|escape}"
+				<a href="{$navUrls.payments|escape}{$querySep|escape}quickFilter=form_unverified&amp;contextId={$activeFilters.contextId|escape}"
 					class="mjcp-pill {if $activeQuickFilter == 'form_unverified'}mjcp-pill--active{/if}">
 					{translate key="mjcp.payment.filter.formUnverified"}
 				</a>
-				<a href="{$navUrls.payments|escape}?quickFilter=loa_unpaid&amp;contextId={$activeFilters.contextId|escape}"
+				<a href="{$navUrls.payments|escape}{$querySep|escape}quickFilter=loa_unpaid&amp;contextId={$activeFilters.contextId|escape}"
 					class="mjcp-pill {if $activeQuickFilter == 'loa_unpaid'}mjcp-pill--active{/if}">
 					{translate key="mjcp.payment.filter.loaUnpaid"}
 				</a>
-				<a href="{$navUrls.payments|escape}?quickFilter=paid_not_copyediting&amp;contextId={$activeFilters.contextId|escape}"
+				<a href="{$navUrls.payments|escape}{$querySep|escape}quickFilter=paid_not_copyediting&amp;contextId={$activeFilters.contextId|escape}"
 					class="mjcp-pill {if $activeQuickFilter == 'paid_not_copyediting'}mjcp-pill--active{/if}">
 					{translate key="mjcp.payment.filter.paidNotCopyediting"}
 				</a>
-				<a href="{$navUrls.payments|escape}?quickFilter=paid_unpublished&amp;contextId={$activeFilters.contextId|escape}"
+				<a href="{$navUrls.payments|escape}{$querySep|escape}quickFilter=paid_unpublished&amp;contextId={$activeFilters.contextId|escape}"
 					class="mjcp-pill {if $activeQuickFilter == 'paid_unpublished'}mjcp-pill--active{/if}">
 					{translate key="mjcp.payment.filter.paidUnpublished"}
 				</a>
@@ -162,7 +162,7 @@
 									<td>{$pItem.notes|escape}</td>
 									<td>
 										{if $pItem.hasProof}
-											<a href="{$navUrls.downloadProof|escape}/{$pItem.submissionId|escape}" class="mjcp-link">
+											<a href="{$pItem.downloadProofUrl|escape}" class="mjcp-link">
 												{$pItem.proofName|escape}
 											</a>
 										{else}
@@ -176,7 +176,7 @@
 											</a>
 											&middot;
 										{/if}
-										<a href="{$navUrls.paymentDetail|escape}/{$pItem.submissionId|escape}" class="mjcp-link">
+										<a href="{$pItem.detailUrl|escape}" class="mjcp-link">
 											{translate key="mjcp.payment.viewSubmission"}
 										</a>
 									</td>
@@ -227,6 +227,35 @@
 									<td>{$rec.paidCount|escape}</td>
 									<td>{$rec.unpaidCount|escape}</td>
 									<td><strong>{$rec.totalAmountFormatted|escape}</strong></td>
+								</tr>
+							{/foreach}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		{/if}
+
+		{* Per-Issue Payment Recap *}
+		{if !empty($paymentRecapByIssue)}
+			<div class="mjcp-panel-box">
+				<h2 class="mjcp-box-title">{translate key="mjcp.payment.recapByIssueHeading"}</h2>
+				<div class="mjcp-table-responsive">
+					<table class="mjcp-table">
+						<thead>
+							<tr>
+								<th>{translate key="mjcp.issue.targetIssue"}</th>
+								<th>{translate key="mjcp.payment.card.paid"}</th>
+								<th>{translate key="mjcp.payment.card.unpaid"}</th>
+								<th>{translate key="mjcp.payment.amount"}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{foreach from=$paymentRecapByIssue item="irec"}
+								<tr>
+									<td><strong>{$irec.issueLabel|escape}</strong></td>
+									<td>{$irec.paidCount|escape}</td>
+									<td>{$irec.unpaidCount|escape}</td>
+									<td><strong>{$irec.totalAmountFormatted|escape}</strong></td>
 								</tr>
 							{/foreach}
 						</tbody>

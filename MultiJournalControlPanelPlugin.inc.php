@@ -72,14 +72,14 @@ class MultiJournalControlPanelPlugin extends GenericPlugin
     }
 
     /**
-     * Site-wide plugin detection when accessed from site context (`index`).
+     * Declare this plugin as a site-wide plugin (matching `<sitewide>1</sitewide>` in `version.xml`).
+     * Ensures OJS 3.3 `PluginAccessPolicy` restricts plugin enable/disable/manage actions to Site Administrators.
      *
      * @copydoc Plugin::isSitePlugin()
      */
     public function isSitePlugin()
     {
-        $request = Application::get()->getRequest();
-        return !$request || !$request->getContext();
+        return true;
     }
 
     /**
@@ -379,6 +379,14 @@ class MultiJournalControlPanelPlugin extends GenericPlugin
         }
 
         $templateMgr->setState(['menu' => $newMenu]);
+
+        // Load plugin script on OJS management/admin pages so Settings AjaxModal binds AjaxFormHandler
+        if ($requestedPage === 'management' || $requestedPage === 'admin') {
+            $baseUrl = $request->getBaseUrl();
+            $pluginUrl = $baseUrl . '/' . $this->getPluginPath();
+            $templateMgr->addJavaScript('mjcpScript', $pluginUrl . '/js/multiJournalControlPanel.js', ['contexts' => ['backend']]);
+        }
+
         return false;
     }
 
@@ -469,9 +477,22 @@ class MultiJournalControlPanelPlugin extends GenericPlugin
                 $request = Application::get()->getRequest();
                 $user = $request ? $request->getUser() : null;
                 if ($user) {
+                    // Enforce access rules: only registered Journal Managers / payment-authorized users see unpaid warnings.
+                    // Directors, copyeditors, reviewers, and unregistered users must never see payment status.
+                    $this->import('classes.services.DashboardService');
+                    $dashboardService = new DashboardService($this);
+                    $context = $request->getContext();
+                    $ctxId = $context ? (int) $context->getId() : 0;
+                    $perms = $dashboardService->resolveUserPermissions($user, $ctxId);
+                    if (!$perms['canViewPayment'] || $perms['isStrictDirector']) {
+                        return false;
+                    }
+
                     import('classes.notification.NotificationManager');
                     $notificationMgr = new NotificationManager();
                     $notificationMgr->createTrivialNotification((int) $user->getId(), NOTIFICATION_TYPE_WARNING, ['contents' => __('mjcp.payment.workflowWarningUnpaid', ['id' => $subId])]);
+                    // Ensure SiteHandler.js displays the trivial notification immediately on this page load
+                    $templateMgr->assign('hasSystemNotifications', true);
                 }
             }
         } catch (Exception $e) {
@@ -500,21 +521,21 @@ class MultiJournalControlPanelPlugin extends GenericPlugin
 
         $openPanelAction = new LinkAction('openControlPanel', new RedirectAction($dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel')), __('mjcp.action.openControlPanel'), null);
 
-        $settingsAction = new LinkAction(
-            'settings',
-            new AjaxModal(
-                $router->url($request, null, null, 'manage', null, [
-                    'verb' => 'settings',
-                    'plugin' => $this->getName(),
-                    'category' => 'generic',
-                ]),
-                $this->getDisplayName(),
-            ),
-            __('manager.plugins.settings'),
-            null,
-        );
+        $user = $request->getUser();
+        $canManageSettings = false;
+        if ($user) {
+            $this->import('classes.services.DashboardService');
+            $dashboardService = new DashboardService($this);
+            $perms = $dashboardService->resolveUserPermissions($user, 0);
+            $canManageSettings = !empty($perms['canManageSettings']);
+        }
 
-        array_unshift($actions, $openPanelAction, $settingsAction);
+        if ($canManageSettings) {
+            $settingsAction = new LinkAction('settings', new AjaxModal($router->url($request, null, null, 'manage', null, array_merge((array) $actionArgs, ['verb' => 'settings'])), $this->getDisplayName()), __('manager.plugins.settings'), null);
+            array_unshift($actions, $openPanelAction, $settingsAction);
+        } else {
+            array_unshift($actions, $openPanelAction);
+        }
         return $actions;
     }
 
@@ -531,7 +552,10 @@ class MultiJournalControlPanelPlugin extends GenericPlugin
         $this->import('classes.services.DashboardService');
         $dashboardService = new DashboardService($this);
         $perms = $dashboardService->resolveUserPermissions($user, 0);
-        if (!$perms['canManageSettings'] && !$perms['isJournalManager']) {
+        if (empty($perms['canManageSettings'])) {
+            $dao = $dashboardService->getDAO();
+            $ipHash = hash('sha256', (string) $request->getRemoteAddr() . '|mjcp_privacy_salt_2026');
+            $dao->logAudit(0, null, (int) $user->getId(), (string) $user->getUsername(), 'unauthorized_plugin_manage_settings', 'security', null, 'Access Denied', $ipHash);
             return new JSONMessage(false, __('mjcp.error.accessDenied'));
         }
 

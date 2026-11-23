@@ -111,7 +111,7 @@
 								{if $detail.payment.hasProof}
 									{$detail.payment.proofName|escape}
 									{if $detail.payment.proofSizeKb > 0}({$detail.payment.proofSizeKb|escape} KB){/if}
-									<a href="{$navUrls.downloadProof|escape}/{$detail.submissionId|escape}" class="mjcp-link">
+									<a href="{$detail.downloadProofUrl|escape}" class="mjcp-link">
 										{translate key="mjcp.common.download"}
 									</a>
 								{else}
@@ -187,8 +187,24 @@
 								{foreach from=$detail.paymentLogs item="plog"}
 									<li>
 										{$plog.changedAtFormatted|escape}: {$plog.oldStatusLabel|escape} &rarr; <strong>{$plog.newStatusLabel|escape}</strong>,
-										{$plog.newAmountFormatted|escape}
-										{if $plog.newNotes}({$plog.newNotes|escape}){/if}
+										{if $plog.oldAmount != $plog.newAmount}
+											{translate key="mjcp.payment.historyAmountChange" old=$plog.oldAmountFormatted|escape new=$plog.newAmountFormatted|escape}
+										{else}
+											{$plog.newAmountFormatted|escape}
+										{/if}
+										{if $plog.oldNotes != $plog.newNotes}
+											({translate key="mjcp.payment.historyNotesChange" old=$plog.oldNotes|default:"-"|escape new=$plog.newNotes|default:"-"|escape})
+										{elseif $plog.newNotes}
+											({$plog.newNotes|escape})
+										{/if}
+										{if $plog.proofChanged}
+											{if $plog.oldProofDownloadUrl}
+												&middot; <a href="{$plog.oldProofDownloadUrl|escape}" class="mjcp-link">{translate key="mjcp.payment.historyProofOld"}</a>
+											{/if}
+											{if $plog.newProofDownloadUrl}
+												&middot; <a href="{$plog.newProofDownloadUrl|escape}" class="mjcp-link">{translate key="mjcp.payment.historyProofNew"}</a>
+											{/if}
+										{/if}
 										({$plog.changedByUsername|escape})
 									</li>
 								{/foreach}
@@ -245,7 +261,7 @@
 						<p>
 							<strong>{$detail.loa.originalFilename|escape}</strong> ({$detail.loa.fileSizeKb|escape} KB)
 							&middot;
-							<a href="{$navUrls.downloadLoa|escape}/{$detail.submissionId|escape}" class="mjcp-link">
+							<a href="{$detail.downloadLoaUrl|escape}" class="mjcp-link">
 								{translate key="mjcp.loa.download"}
 							</a>
 						</p>

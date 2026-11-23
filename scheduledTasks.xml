@@ -14,6 +14,6 @@
 <scheduled_tasks>
 	<task class="plugins.generic.multiJournalControlPanel.classes.tasks.SynchronizationTask">
 		<descr>Synchronize cross-journal editorial pipeline, bottleneck calculations, issue quotas, and performance summaries for Multi-Journal Control Panel.</descr>
-		<frequency hour="2"/>
+		<frequency hour="*/2"/>
 	</task>
 </scheduled_tasks>

@@ -23,16 +23,18 @@
 		{* Top Header with Bilingual Language Switcher *}
 		<header class="mjcp-author-topbar">
 			<div class="mjcp-topbar__brand">{$houseName|escape}</div>
-			<div class="mjcp-lang-switcher">
-				<a href="{$confirmUrl|escape}?uiLocale=id_ID"
-					class="mjcp-pill {if $activeLocale == 'id_ID'}mjcp-pill--active{/if}">
-					{translate key="mjcp.common.langIndonesia"}
-				</a>
-				<a href="{$confirmUrl|escape}?uiLocale=en_US"
-					class="mjcp-pill {if $activeLocale == 'en_US'}mjcp-pill--active{/if}">
-					{translate key="mjcp.common.langEnglish"}
-				</a>
-			</div>
+			{if $enableLangId && $enableLangEn}
+				<div class="mjcp-lang-switcher">
+					<a href="{$confirmUrlId|escape}"
+						class="mjcp-pill {if $activeLocale == 'id_ID'}mjcp-pill--active{/if}">
+						{translate key="mjcp.common.langIndonesia"}
+					</a>
+					<a href="{$confirmUrlEn|escape}"
+						class="mjcp-pill {if $activeLocale == 'en_US'}mjcp-pill--active{/if}">
+						{translate key="mjcp.common.langEnglish"}
+					</a>
+				</div>
+			{/if}
 		</header>
 
 		<main class="mjcp-author-main">
@@ -101,7 +103,7 @@
 
 						<form method="POST" action="{$submitConfirmationUrl|escape}" enctype="multipart/form-data" class="mjcp-form">
 							<input type="hidden" name="csrfToken" value="{$csrfToken|escape}" />
-							<input type="hidden" name="lang" value="{$activeLocale|escape}" />
+							<input type="hidden" name="uiLocale" value="{$activeLocale|escape}" />
 
 							<div class="mjcp-form-group">
 								<label for="mjcpAuthSubId">{translate key="mjcp.authorForm.manuscriptId"}</label>
@@ -197,11 +199,21 @@
 							<a href="{$downloadLoaUrl|escape}" class="mjcp-btn mjcp-btn--primary">
 								{translate key="mjcp.loa.download"}
 							</a>
-							<a href="{$baseLoaValidationUrl|escape}?loa={$detail.loa.loaNumber|escape:'url'}" target="_blank" class="mjcp-btn mjcp-btn--primary">
+							<a href="{$loaValidationUrlFull|escape}" target="_blank" class="mjcp-btn mjcp-btn--primary">
 								{translate key="mjcp.loa.validateBtn"}
 							</a>
 						</div>
 						<p class="mjcp-muted">{translate key="mjcp.authorForm.loaValidationHint"}</p>
+					{elseif $detail.payment.status == 'paid' && !$detail.loa.exists}
+						<div class="mjcp-author-card__head">
+							<h2 class="mjcp-box-title">{translate key="mjcp.authorForm.section2Title"}</h2>
+							<span class="mjcp-badge mjcp-badge-warning">{translate key="mjcp.authorForm.loaStatusPendingUpload"}</span>
+						</div>
+						<p class="mjcp-muted">{translate key="mjcp.authorForm.loaPendingUploadNote"}</p>
+						<div class="mjcp-form-actions">
+							<button type="button" class="mjcp-btn mjcp-btn--disabled" disabled>{translate key="mjcp.loa.download"}</button>
+							<button type="button" class="mjcp-btn mjcp-btn--disabled" disabled>{translate key="mjcp.loa.validateBtn"}</button>
+						</div>
 					{else}
 						<div class="mjcp-author-card__head">
 							<h2 class="mjcp-box-title">{translate key="mjcp.authorForm.section2Title"}</h2>

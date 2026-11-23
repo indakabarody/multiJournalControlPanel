@@ -22,16 +22,18 @@
 	<div class="mjcp-container mjcp-author-container">
 		<header class="mjcp-author-topbar">
 			<div class="mjcp-topbar__brand">{$houseName|escape}</div>
-			<div class="mjcp-lang-switcher">
-				<a href="{$validateLoaUrl|escape}?loa={$loaNumber|escape:'url'}&amp;uiLocale=id_ID"
-					class="mjcp-pill {if $activeLocale == 'id_ID'}mjcp-pill--active{/if}">
-					{translate key="mjcp.common.langIndonesia"}
-				</a>
-				<a href="{$validateLoaUrl|escape}?loa={$loaNumber|escape:'url'}&amp;uiLocale=en_US"
-					class="mjcp-pill {if $activeLocale == 'en_US'}mjcp-pill--active{/if}">
-					{translate key="mjcp.common.langEnglish"}
-				</a>
-			</div>
+			{if $enableLangId && $enableLangEn}
+				<div class="mjcp-lang-switcher">
+					<a href="{$validateLoaUrlId|escape}"
+						class="mjcp-pill {if $activeLocale == 'id_ID'}mjcp-pill--active{/if}">
+						{translate key="mjcp.common.langIndonesia"}
+					</a>
+					<a href="{$validateLoaUrlEn|escape}"
+						class="mjcp-pill {if $activeLocale == 'en_US'}mjcp-pill--active{/if}">
+						{translate key="mjcp.common.langEnglish"}
+					</a>
+				</div>
+			{/if}
 		</header>
 
 		<main class="mjcp-author-main">
@@ -40,6 +42,7 @@
 				<p class="mjcp-subtitle">{translate key="mjcp.loa.validation.subtitle"}</p>
 
 				<form method="GET" action="{$validateLoaUrl|escape}" class="mjcp-inline-form">
+					<input type="hidden" name="uiLocale" value="{$activeLocale|escape}" />
 					<input type="text" name="loa" class="mjcp-input"
 						value="{$loaNumber|escape}"
 						placeholder="{translate|escape key="mjcp.loa.numberPlaceholder"}" required />

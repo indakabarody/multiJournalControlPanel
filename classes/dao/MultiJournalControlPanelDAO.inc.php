@@ -164,7 +164,7 @@ class MultiJournalControlPanelDAO extends DAO
 
             $pubSettings = Capsule::table('publication_settings')
                 ->whereIn('publication_id', $publicationIds)
-                ->whereIn('setting_name', ['title', 'fullTitle', 'issueId', 'pub-id::doi'])
+                ->whereIn('setting_name', ['prefix', 'title', 'subtitle', 'issueId', 'pub-id::doi'])
                 ->get();
 
             $rawTitles = [];
@@ -187,13 +187,22 @@ class MultiJournalControlPanelDAO extends DAO
             foreach ($submissionRows as $row) {
                 $subId = (int) $row->submission_id;
                 $subLoc = $row->submission_locale ? (string) $row->submission_locale : $locale;
-                $fullTitleMap = isset($rawTitles[$subId]['fullTitle']) ? $rawTitles[$subId]['fullTitle'] : [];
+                $prefixMap = isset($rawTitles[$subId]['prefix']) ? $rawTitles[$subId]['prefix'] : [];
                 $titleMap = isset($rawTitles[$subId]['title']) ? $rawTitles[$subId]['title'] : [];
-                $title = $this->pickLocalizedValue($fullTitleMap, $locale, $subLoc, '');
-                if ($title === '') {
-                    $title = $this->pickLocalizedValue($titleMap, $locale, $subLoc, '');
+                $subtitleMap = isset($rawTitles[$subId]['subtitle']) ? $rawTitles[$subId]['subtitle'] : [];
+
+                $prefix = trim(strip_tags($this->pickLocalizedValue($prefixMap, $locale, $subLoc, '')));
+                $baseTitle = trim(strip_tags($this->pickLocalizedValue($titleMap, $locale, $subLoc, '')));
+                $subtitle = trim(strip_tags($this->pickLocalizedValue($subtitleMap, $locale, $subLoc, '')));
+
+                $composedTitle = $baseTitle;
+                if ($prefix !== '' && $composedTitle !== '') {
+                    $composedTitle = $prefix . ' ' . $composedTitle;
                 }
-                $titlesBySub[$subId] = trim(strip_tags((string) $title));
+                if ($subtitle !== '' && $composedTitle !== '') {
+                    $composedTitle .= ': ' . $subtitle;
+                }
+                $titlesBySub[$subId] = trim($composedTitle);
             }
 
             // 2. Authors and primary correspondent email
@@ -233,6 +242,7 @@ class MultiJournalControlPanelDAO extends DAO
                 }
                 $affil = trim($this->pickLocalizedValue(isset($aSet['affiliation']) ? $aSet['affiliation'] : [], $locale, 'en_US', ''));
                 $authorsBySub[$subId][] = [
+                    'authorId' => $aid,
                     'name' => $fullName,
                     'email' => (string) $ar->email,
                     'affiliation' => $affil,
@@ -385,7 +395,8 @@ class MultiJournalControlPanelDAO extends DAO
             }
 
             $defaultTargetDate = $this->inferIssueTargetDate($ir, $title);
-            $customQuotaRow = isset($quotasByCtxIssue[$ctxId][$issueId]) ? $quotasByCtxIssue[$ctxId][$issueId] : (isset($quotasByCtxIssue[$ctxId][0]) ? $quotasByCtxIssue[$ctxId][0] : null);
+            $hasIssueSpecificQuota = isset($quotasByCtxIssue[$ctxId][$issueId]);
+            $customQuotaRow = $hasIssueSpecificQuota ? $quotasByCtxIssue[$ctxId][$issueId] : (isset($quotasByCtxIssue[$ctxId][0]) ? $quotasByCtxIssue[$ctxId][0] : null);
 
             $targetDate = $customQuotaRow && !empty($customQuotaRow->target_date) ? substr((string) $customQuotaRow->target_date, 0, 10) : (isset($erTargetsByIssue[$issueId]) ? $erTargetsByIssue[$issueId] : $defaultTargetDate);
 
@@ -404,6 +415,7 @@ class MultiJournalControlPanelDAO extends DAO
                 'identification' => $fullLabel,
                 'targetDate' => $targetDate,
                 'quota' => $quota,
+                'hasIssueSpecificQuota' => $hasIssueSpecificQuota,
             ];
         }
 
@@ -507,6 +519,8 @@ class MultiJournalControlPanelDAO extends DAO
 
     /**
      * Get stage thresholds for a context (falling back to global context_id = 0).
+     * Reads shared configuration from Editorial Reminder Dashboard (`editorialreminderdashboardplugin`)
+     * when installed so both plugins share identical threshold rules.
      *
      * @param int $contextId
      * @return array
@@ -528,6 +542,40 @@ class MultiJournalControlPanelDAO extends DAO
         $round1Warn = $row ? max(1, (int) $row->round1_warning_days) : 3;
         $round2Warn = $row ? max(1, (int) $row->round2_warning_days) : 2;
         $copyeditingWarn = $row ? max(1, (int) $row->copyediting_warning_days) : 10;
+
+        // Read shared thresholds from Editorial Reminder Dashboard plugin_settings when present
+        try {
+            $erContexts = (int) $contextId > 0 ? [(int) $contextId, 0] : [0];
+            $erRows = Capsule::table('plugin_settings')
+                ->where('plugin_name', '=', 'editorialreminderdashboardplugin')
+                ->whereIn('context_id', $erContexts)
+                ->whereIn('setting_name', ['round1Limit', 'round2Limit', 'round1Warning', 'round2Warning', 'copyeditingWarning'])
+                ->get();
+
+            if (!$erRows->isEmpty()) {
+                $erByCtx = [];
+                foreach ($erRows as $er) {
+                    $erByCtx[(int) $er->context_id][(string) $er->setting_name] = (int) $er->setting_value;
+                }
+                $erMap = isset($erByCtx[(int) $contextId]) ? $erByCtx[(int) $contextId] : (isset($erByCtx[0]) ? $erByCtx[0] : []);
+                if (!empty($erMap['round1Limit'])) {
+                    $round1Limit = max(14, min(21, (int) $erMap['round1Limit']));
+                }
+                if (!empty($erMap['round2Limit'])) {
+                    $round2Limit = max(1, (int) $erMap['round2Limit']);
+                }
+                if (!empty($erMap['round1Warning'])) {
+                    $round1Warn = max(1, (int) $erMap['round1Warning']);
+                }
+                if (!empty($erMap['round2Warning'])) {
+                    $round2Warn = max(1, (int) $erMap['round2Warning']);
+                }
+                if (!empty($erMap['copyeditingWarning'])) {
+                    $copyeditingWarn = max(1, (int) $erMap['copyeditingWarning']);
+                }
+            }
+        } catch (Exception $e) {
+        }
 
         return [
             'round1Limit' => $round1Limit,
@@ -577,23 +625,34 @@ class MultiJournalControlPanelDAO extends DAO
             Capsule::table('mjcp_stage_thresholds')->insert($payload);
         }
 
-        // Phase 4 integration: share threshold settings with Editorial Reminder Dashboard if present
+        // Phase 4 integration: keep Editorial Reminder Dashboard plugin_settings synchronized when installed
         try {
-            $erSettings = [
-                'round1Limit' => ['val' => $round1Limit, 'type' => 'int'],
-                'round2Limit' => ['val' => $round2Limit, 'type' => 'int'],
-                'round1Warning' => ['val' => $round1Warn, 'type' => 'int'],
-                'round2Warning' => ['val' => $round2Warn, 'type' => 'int'],
-                'copyeditingWarning' => ['val' => $ceWarn, 'type' => 'int'],
-            ];
-            foreach ($erSettings as $sName => $sMeta) {
-                $existsEr = Capsule::table('plugin_settings')->where('plugin_name', '=', 'editorialreminderdashboardplugin')->where('context_id', '=', $ctxId)->where('setting_name', '=', $sName)->exists();
-                if ($existsEr) {
-                    Capsule::table('plugin_settings')
-                        ->where('plugin_name', '=', 'editorialreminderdashboardplugin')
-                        ->where('context_id', '=', $ctxId)
-                        ->where('setting_name', '=', $sName)
-                        ->update(['setting_value' => (string) $sMeta['val'], 'setting_type' => $sMeta['type']]);
+            $erInstalled = Capsule::table('plugin_settings')->where('plugin_name', '=', 'editorialreminderdashboardplugin')->exists();
+            if ($erInstalled) {
+                $erSettings = [
+                    'round1Limit' => ['val' => $round1Limit, 'type' => 'int'],
+                    'round2Limit' => ['val' => $round2Limit, 'type' => 'int'],
+                    'round1Warning' => ['val' => $round1Warn, 'type' => 'int'],
+                    'round2Warning' => ['val' => $round2Warn, 'type' => 'int'],
+                    'copyeditingWarning' => ['val' => $ceWarn, 'type' => 'int'],
+                ];
+                foreach ($erSettings as $sName => $sMeta) {
+                    $existsEr = Capsule::table('plugin_settings')->where('plugin_name', '=', 'editorialreminderdashboardplugin')->where('context_id', '=', $ctxId)->where('setting_name', '=', $sName)->exists();
+                    if ($existsEr) {
+                        Capsule::table('plugin_settings')
+                            ->where('plugin_name', '=', 'editorialreminderdashboardplugin')
+                            ->where('context_id', '=', $ctxId)
+                            ->where('setting_name', '=', $sName)
+                            ->update(['setting_value' => (string) $sMeta['val'], 'setting_type' => $sMeta['type']]);
+                    } else {
+                        Capsule::table('plugin_settings')->insert([
+                            'plugin_name' => 'editorialreminderdashboardplugin',
+                            'context_id' => $ctxId,
+                            'setting_name' => $sName,
+                            'setting_value' => (string) $sMeta['val'],
+                            'setting_type' => $sMeta['type'],
+                        ]);
+                    }
                 }
             }
         } catch (Exception $e) {
@@ -800,23 +859,48 @@ class MultiJournalControlPanelDAO extends DAO
     }
 
     /**
-     * Get latest synchronization log per journal (and overall context_id = 0).
+     * Get latest synchronization log per journal (and overall context_id = 0) using grouped MAX(sync_id).
+     * Scales accurately for 48+ journals regardless of total sync log history size.
      *
      * @return array
      */
     public function getLatestSyncLogsByJournal()
     {
         $this->ensureSchema();
-        $rows = Capsule::table('mjcp_sync_logs')->orderBy('sync_id', 'desc')->limit(300)->get();
+        $maxIdRows = Capsule::table('mjcp_sync_logs')
+            ->select([Capsule::raw('MAX(sync_id) as max_sync_id')])
+            ->groupBy('context_id')
+            ->get();
+
+        $maxIds = [];
+        foreach ($maxIdRows as $mr) {
+            if (!empty($mr->max_sync_id)) {
+                $maxIds[] = (int) $mr->max_sync_id;
+            }
+        }
+        if (empty($maxIds)) {
+            return [];
+        }
+
+        $rows = Capsule::table('mjcp_sync_logs')->whereIn('sync_id', $maxIds)->get();
 
         $latest = [];
         foreach ($rows as $r) {
-            $cid = (int) $r->context_id;
-            if (!isset($latest[$cid])) {
-                $latest[$cid] = $r;
-            }
+            $latest[(int) $r->context_id] = $r;
         }
         return $latest;
+    }
+
+    /**
+     * Fetch a single payment audit log entry by ID (for downloading preserved historical proof files).
+     *
+     * @param int $paymentLogId
+     * @return object|null
+     */
+    public function getPaymentLogById($paymentLogId)
+    {
+        $this->ensureSchema();
+        return Capsule::table('mjcp_payment_logs')->where('payment_log_id', '=', (int) $paymentLogId)->first();
     }
 
     /**
@@ -1026,11 +1110,12 @@ class MultiJournalControlPanelDAO extends DAO
 
     /**
      * Replace user role assignments for a given role_key from a comma-separated username list.
+     * Returns a list of any usernames not found in OJS `users`.
      *
      * @param string $roleKey
      * @param string $usernamesCsv
      * @param int $assignedBy
-     * @return void
+     * @return array List of unknown usernames not matched in OJS `users`
      */
     public function setRoleUsernames($roleKey, $usernamesCsv, $assignedBy)
     {
@@ -1039,6 +1124,7 @@ class MultiJournalControlPanelDAO extends DAO
         $tokens = preg_split('/[\s,;]+/', strtolower(trim((string) $usernamesCsv)), -1, PREG_SPLIT_NO_EMPTY);
         $tokens = array_values(array_unique($tokens));
         $now = date('Y-m-d H:i:s');
+        $unknown = [];
 
         Capsule::table('mjcp_user_roles')->where('role_key', '=', $rKey)->delete();
 
@@ -1046,6 +1132,9 @@ class MultiJournalControlPanelDAO extends DAO
             $userRow = Capsule::table('users')
                 ->whereRaw('LOWER(username) = ?', [$uname])
                 ->first();
+            if (!$userRow) {
+                $unknown[] = $uname;
+            }
             Capsule::table('mjcp_user_roles')->insert([
                 'user_id' => $userRow ? (int) $userRow->user_id : null,
                 'username' => $uname,
@@ -1055,6 +1144,8 @@ class MultiJournalControlPanelDAO extends DAO
                 'assigned_at' => $now,
             ]);
         }
+
+        return $unknown;
     }
 
     /**
@@ -1096,10 +1187,11 @@ class MultiJournalControlPanelDAO extends DAO
 
     /**
      * Update the whitelist of payment access usernames in `mjcp_access_users`.
+     * Returns a list of any usernames not found in OJS `users`.
      *
      * @param string $usernamesCsv
      * @param int $updatedBy
-     * @return void
+     * @return array List of unknown usernames not matched in OJS `users`
      */
     public function setPaymentAccessUsernames($usernamesCsv, $updatedBy)
     {
@@ -1107,6 +1199,7 @@ class MultiJournalControlPanelDAO extends DAO
         $tokens = preg_split('/[\s,;]+/', strtolower(trim((string) $usernamesCsv)), -1, PREG_SPLIT_NO_EMPTY);
         $tokens = array_values(array_unique($tokens));
         $now = date('Y-m-d H:i:s');
+        $unknown = [];
 
         Capsule::table('mjcp_access_users')->delete();
 
@@ -1114,6 +1207,9 @@ class MultiJournalControlPanelDAO extends DAO
             $userRow = Capsule::table('users')
                 ->whereRaw('LOWER(username) = ?', [$uname])
                 ->first();
+            if (!$userRow) {
+                $unknown[] = $uname;
+            }
             Capsule::table('mjcp_access_users')->insert([
                 'user_id' => $userRow ? (int) $userRow->user_id : null,
                 'username' => $uname,
@@ -1123,6 +1219,8 @@ class MultiJournalControlPanelDAO extends DAO
                 'created_at' => $now,
             ]);
         }
+
+        return $unknown;
     }
 
     /**

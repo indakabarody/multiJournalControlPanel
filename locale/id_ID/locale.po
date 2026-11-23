@@ -820,7 +820,7 @@ msgid "mjcp.authorForm.submittedSuccess"
 msgstr "Konfirmasi pembayaran Anda berhasil dikirim."
 
 msgid "mjcp.upload.error.fileTooLarge"
-msgstr "Ukuran file melebihi batas maksimal ({$maxKb} KB / 1 MB)."
+msgstr "Ukuran file melebihi batas maksimal ({$maxKb} KB / {$maxMb} MB)."
 
 msgid "mjcp.upload.error.invalidProofFormat"
 msgstr "Format file tidak didukung. Gunakan file JPG, PNG, atau PDF."
@@ -1067,3 +1067,130 @@ msgstr "Minggu"
 
 msgid "mjcp.authorForm.whatsappPlaceholder"
 msgstr "08xx-xxxx-xxxx"
+
+
+msgid "mjcp.pipeline.declined"
+msgstr "Ditolak"
+
+msgid "mjcp.pipeline.sortLabel"
+msgstr "Urutkan jurnal"
+
+msgid "mjcp.pipeline.sort.nameAsc"
+msgstr "Nama jurnal (A-Z)"
+
+msgid "mjcp.pipeline.sort.nameDesc"
+msgstr "Nama jurnal (Z-A)"
+
+msgid "mjcp.pipeline.sort.allDesc"
+msgstr "Artikel terbanyak"
+
+msgid "mjcp.pipeline.sort.overdueDesc"
+msgstr "Terlambat terbanyak"
+
+msgid "mjcp.issue.timeliness.onTime"
+msgstr "Perkiraan tepat waktu"
+
+msgid "mjcp.issue.timeliness.atRisk"
+msgstr "Berisiko terlambat"
+
+msgid "mjcp.issue.timeliness.delayed"
+msgstr "Terlambat"
+
+msgid "mjcp.issue.targetDateLabel"
+msgstr "Target terbit: {$date}"
+
+msgid "mjcp.issue.articlesToggle"
+msgstr "Indikator per naskah ({$count})"
+
+msgid "mjcp.issue.copyeditingDone"
+msgstr "Selesai"
+
+msgid "mjcp.issue.copyeditingPending"
+msgstr "Proses"
+
+msgid "mjcp.issue.readyShortageNote"
+msgstr "Siap {$ready} dari kuota {$quota}"
+
+msgid "mjcp.issue.unassignedIssue"
+msgstr "Issue belum ditetapkan"
+
+msgid "mjcp.performance.stageOnTimeHeading"
+msgstr "Tepat waktu vs terlambat per tahap"
+
+msgid "mjcp.performance.onTimeCount"
+msgstr "Tepat waktu"
+
+msgid "mjcp.performance.overdueCount"
+msgstr "Terlambat"
+
+msgid "mjcp.performance.onTimePct"
+msgstr "Tepat waktu (%)"
+
+msgid "mjcp.performance.overduePct"
+msgstr "Terlambat (%)"
+
+msgid "mjcp.performance.stage.reviewRound1"
+msgstr "Review round 1"
+
+msgid "mjcp.performance.stage.reviewRound2Plus"
+msgstr "Review round 2 dst"
+
+msgid "mjcp.performance.stage.copyediting"
+msgstr "Copyediting"
+
+msgid "mjcp.performance.monthlyTableHeading"
+msgstr "Rincian tren bulanan"
+
+msgid "mjcp.performance.comparisonHeading"
+msgstr "Perbandingan antar jurnal"
+
+msgid "mjcp.payment.recapByIssueHeading"
+msgstr "Rekap Pembayaran per Issue"
+
+msgid "mjcp.payment.historyProofOld"
+msgstr "Bukti sebelumnya"
+
+msgid "mjcp.payment.historyProofNew"
+msgstr "Bukti baru"
+
+msgid "mjcp.payment.historyAmountChange"
+msgstr "{$old} -> {$new}"
+
+msgid "mjcp.payment.historyNotesChange"
+msgstr "Keterangan: {$old} -> {$new}"
+
+msgid "mjcp.links.regenerateBtn"
+msgstr "Buat ulang"
+
+msgid "mjcp.links.manageLoaBtn"
+msgstr "Kelola LOA"
+
+msgid "mjcp.links.selectAtLeastOne"
+msgstr "Silakan pilih minimal satu naskah terlebih dahulu."
+
+msgid "mjcp.links.confirmRegenerate"
+msgstr "Membuat ulang link akan menonaktifkan link penulis sebelumnya. Lanjutkan?"
+
+msgid "mjcp.links.confirmDeactivate"
+msgstr "Nonaktifkan link penulis ini? Penulis tidak akan dapat mengaksesnya lagi."
+
+msgid "mjcp.loa.error.duplicateNumber"
+msgstr "Nomor LOA ini sudah digunakan pada naskah lain."
+
+msgid "mjcp.authorForm.loaPendingUploadNote"
+msgstr "Pembayaran Anda sudah terverifikasi. Mohon tunggu Journal Manager mengunggah file LOA Anda."
+
+msgid "mjcp.authorForm.loaStatusPendingUpload"
+msgstr "Menunggu unggah LOA"
+
+msgid "mjcp.authorForm.error.sessionExpired"
+msgstr "Sesi formulir Anda telah berakhir. Silakan periksa kembali isian Anda dan kirim ulang."
+
+msgid "mjcp.export.filterSummaryDetailed"
+msgstr "Jurnal: {$journal} | Periode: {$period} | Filter: {$filter} | Pencarian: {$search}"
+
+msgid "mjcp.export.sheet.recapByIssue"
+msgstr "Rekap per Issue"
+
+msgid "mjcp.settings.unknownUsernamesWarning"
+msgstr "Pengaturan disimpan, tetapi username berikut tidak ditemukan di daftar pengguna OJS: {$usernames}"

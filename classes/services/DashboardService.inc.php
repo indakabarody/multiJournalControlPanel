@@ -103,6 +103,8 @@ class DashboardService
             'canExportGeneral' => false,
             'canExportPayment' => false,
             'canManageSettings' => false,
+            'canManageTestimonials' => false,
+            'canTriggerSync' => false,
         ];
 
         if (!$user) {
@@ -120,20 +122,23 @@ class DashboardService
         $isDirector = in_array('director', $pluginRoles, true);
         $isFinanceAdmin = in_array('finance_admin', $pluginRoles, true);
         $isTechnicalAdmin = in_array('technical_admin', $pluginRoles, true) || $isSiteAdmin;
-        $isJournalManager = in_array('journal_manager', $pluginRoles, true) || $isOjsJournalManager || ($isSiteAdmin && !$isDirector);
+        // Strict role separation: Site Admin (Technical Admin) does NOT automatically inherit Journal Manager (LOA/payment) rights
+        $isJournalManager = in_array('journal_manager', $pluginRoles, true) || $isOjsJournalManager;
 
         // If a user has explicit 'director' role and is NOT explicitly granted another plugin role,
-        // enforce strict director separation (directors cannot access the payment module).
-        $isStrictDirector = $isDirector && !in_array('finance_admin', $pluginRoles, true) && !in_array('journal_manager', $pluginRoles, true);
+        // enforce strict director separation (directors cannot access the payment module or mutate data).
+        $isStrictDirector = $isDirector && !in_array('finance_admin', $pluginRoles, true) && !in_array('journal_manager', $pluginRoles, true) && !in_array('technical_admin', $pluginRoles, true);
         if ($isStrictDirector) {
             $isJournalManager = false;
             $isFinanceAdmin = false;
+            $isTechnicalAdmin = false;
         }
 
         $isInAccessList = $this->_dao->isUsernameInPaymentAccessList($username);
 
         // Payment access rules:
         // - Director CANNOT access payment module at all.
+        // - Technical Admin CANNOT access payment module unless also assigned Journal Manager or Finance Admin + registered.
         // - Journal Manager can view payment ONLY if their username is registered in mjcp_access_users.
         // - Finance Admin can view & edit payment ONLY if their username is registered in mjcp_access_users.
         $canViewPayment = false;
@@ -155,6 +160,8 @@ class DashboardService
         $canExportGeneral = $isDirector || $isJournalManager || $isTechnicalAdmin;
         $canExportPayment = $canViewPayment;
         $canManageSettings = $isTechnicalAdmin && !$isStrictDirector;
+        $canManageTestimonials = ($isJournalManager || $isTechnicalAdmin) && !$isStrictDirector;
+        $canTriggerSync = ($isJournalManager || $isTechnicalAdmin) && !$isStrictDirector;
 
         $effectiveRoles = [];
         if ($isDirector) {
@@ -176,6 +183,7 @@ class DashboardService
             'username' => $username,
             'roles' => $effectiveRoles,
             'isDirector' => $isDirector,
+            'isStrictDirector' => $isStrictDirector,
             'isJournalManager' => $isJournalManager,
             'isFinanceAdmin' => $isFinanceAdmin,
             'isTechnicalAdmin' => $isTechnicalAdmin,
@@ -189,6 +197,8 @@ class DashboardService
             'canExportGeneral' => $canExportGeneral,
             'canExportPayment' => $canExportPayment,
             'canManageSettings' => $canManageSettings,
+            'canManageTestimonials' => $canManageTestimonials,
+            'canTriggerSync' => $canTriggerSync,
         ];
     }
 
@@ -233,11 +243,11 @@ class DashboardService
             }
         }
 
-        // Calculate issues below quota
+        // Calculate issues below quota (ready count < quota)
         $issueHealthList = $this->getIssueHealthList($filters, $locale);
         $issuesBelowQuota = 0;
         foreach ($issueHealthList as $ih) {
-            if ($ih['healthStatus'] === 'under_quota') {
+            if (!empty($ih['isUnderReadyQuota']) || $ih['healthStatus'] === 'under_quota') {
                 $issuesBelowQuota++;
             }
         }
@@ -296,6 +306,7 @@ class DashboardService
                 'production' => 0,
                 'published' => 0,
                 'declined' => 0,
+                'overdueCount' => 0,
                 'reviewDelayBadge' => 'none', // 'none'|'warning'|'danger'
                 'revisionDelayBadge' => 'none',
                 'copyeditingDelayBadge' => 'none',
@@ -307,7 +318,10 @@ class DashboardService
             return [];
         }
 
-        $query = $this->_buildFilteredArticleQuery($filters);
+        // Apply journal/period filters (journal search already matched above so journal rows include all their submissions)
+        $articleFilters = $filters;
+        unset($articleFilters['search']);
+        $query = $this->_buildFilteredArticleQuery($articleFilters);
         $articleRows = $query->get();
 
         foreach ($articleRows as $ar) {
@@ -323,6 +337,9 @@ class DashboardService
             }
 
             $bStatus = (string) $ar->bottleneck_status;
+            if ($bStatus === 'overdue') {
+                $pipelineRows[$cid]['overdueCount']++;
+            }
             $badgeKey = $bucket . 'DelayBadge';
             if (isset($pipelineRows[$cid][$badgeKey])) {
                 if ($bStatus === 'overdue') {
@@ -333,7 +350,30 @@ class DashboardService
             }
         }
 
-        return array_values($pipelineRows);
+        $result = array_values($pipelineRows);
+        $sort = isset($filters['sort']) ? trim((string) $filters['sort']) : '';
+        if ($sort === 'name_asc') {
+            usort($result, function ($a, $b) {
+                return strcasecmp($a['journalName'], $b['journalName']);
+            });
+        } elseif ($sort === 'name_desc') {
+            usort($result, function ($a, $b) {
+                return strcasecmp($b['journalName'], $a['journalName']);
+            });
+        } elseif ($sort === 'all_desc') {
+            usort($result, function ($a, $b) {
+                return $b['allArticle'] - $a['allArticle'];
+            });
+        } elseif ($sort === 'overdue_desc') {
+            usort($result, function ($a, $b) {
+                if ($b['overdueCount'] !== $a['overdueCount']) {
+                    return $b['overdueCount'] - $a['overdueCount'];
+                }
+                return strcasecmp($a['journalName'], $b['journalName']);
+            });
+        }
+
+        return $result;
     }
 
     /**
@@ -405,7 +445,9 @@ class DashboardService
     {
         $this->_syncService->ensureSynchronized($locale);
 
-        $query = $this->_buildFilteredArticleQuery($filters);
+        $btlFilters = $filters;
+        $btlFilters['includeActiveBottlenecks'] = true;
+        $query = $this->_buildFilteredArticleQuery($btlFilters);
         $query->whereIn('bottleneck_status', ['overdue', 'almost_due']);
 
         $rows = $query->orderBy('urgency_score', 'desc')->orderBy('overdue_working_days', 'desc')->orderBy('elapsed_working_days', 'desc')->orderBy('submission_id', 'asc')->get();
@@ -512,13 +554,16 @@ class DashboardService
                 $statusLabel = __('mjcp.journals.status.failed');
             }
 
-            $ojsUrl = $dispatcher ? $dispatcher->url($request, ROUTE_PAGE, $jInfo['path'], 'submissions') : $baseUrl . '/index.php/' . $jInfo['path'] . '/submissions';
+            $restfulUrls = (bool) Config::getVar('general', 'restful_urls', false);
+            $indexPrefix = $restfulUrls ? '' : '/index.php';
+            $ojsUrl = $dispatcher ? $dispatcher->url($request, ROUTE_PAGE, $jInfo['path'], 'submissions') : rtrim($baseUrl, '/') . $indexPrefix . '/' . $jInfo['path'] . '/submissions';
+            $journalHomeUrl = $dispatcher ? $dispatcher->url($request, ROUTE_PAGE, $jInfo['path'], 'index') : rtrim($baseUrl, '/') . $indexPrefix . '/' . $jInfo['path'];
 
             $list[] = [
                 'contextId' => $cid,
                 'journalName' => $jInfo['name'],
                 'journalPath' => $jInfo['path'],
-                'journalUrl' => $baseUrl . '/index.php/' . $jInfo['path'],
+                'journalUrl' => $journalHomeUrl,
                 'openOjsUrl' => $ojsUrl,
                 'activeSubmissions' => $status === 'failed' ? '-' : (isset($activeByCtx[$cid]) ? $activeByCtx[$cid] : 0),
                 'syncStatus' => $status,
@@ -587,7 +632,16 @@ class DashboardService
                 }
             }
 
-            $quota = isset($defaultQuotas[$cid]) ? (int) $defaultQuotas[$cid] : ($targetIssue ? (int) $targetIssue['quota'] : 10);
+            // Issue-specific quota takes precedence over journal default quota
+            if ($targetIssue && !empty($targetIssue['hasIssueSpecificQuota'])) {
+                $quota = (int) $targetIssue['quota'];
+            } elseif (isset($defaultQuotas[$cid])) {
+                $quota = (int) $defaultQuotas[$cid];
+            } elseif ($targetIssue) {
+                $quota = (int) $targetIssue['quota'];
+            } else {
+                $quota = 10;
+            }
             if ($quota <= 0) {
                 $quota = 10;
             }
@@ -600,6 +654,7 @@ class DashboardService
             $plottedCount = 0;
             $readyCount = 0;
             $inProgressCount = 0;
+            $overdueInIssueCount = 0;
             $loaUploadedCount = 0;
             $copyeditingDoneCount = 0;
             $publishedCount = 0;
@@ -633,19 +688,26 @@ class DashboardService
                     $readyCount++;
                 } else {
                     $inProgressCount++;
+                    if ((string) $ar->bottleneck_status === 'overdue') {
+                        $overdueInIssueCount++;
+                    }
                 }
 
                 $articleDetails[] = [
                     'submissionId' => (int) $ar->submission_id,
                     'title' => (string) $ar->article_title,
                     'loaStatus' => $hasLoa ? 'uploaded' : 'missing',
+                    'loaLabel' => $hasLoa ? __('mjcp.loa.status.uploaded') : __('mjcp.loa.status.notUploaded'),
                     'copyeditingDone' => $ceDone,
+                    'copyeditingLabel' => $ceDone ? __('mjcp.issue.copyeditingDone') : __('mjcp.issue.copyeditingPending'),
                     'isPublished' => $isPub,
+                    'publishedLabel' => $isPub ? __('mjcp.publication.status.published') : __('mjcp.publication.status.unpublished'),
                     'isReady' => $isReady,
                 ];
             }
 
             // Determine health status and warning badge
+            $isUnderReadyQuota = $readyCount < $quota;
             $effectiveCompareCount = $plottedCount > $quota ? $plottedCount : $readyCount;
             if ($plottedCount > $quota) {
                 $diff = $plottedCount - $quota;
@@ -653,6 +715,9 @@ class DashboardService
                 $badgeType = 'warning';
                 $badgeLabel = __('mjcp.issue.overQuota', ['count' => $diff]);
                 $progressText = __('mjcp.issue.plottedOfQuota', ['count' => $plottedCount, 'quota' => $quota]);
+                if ($isUnderReadyQuota) {
+                    $progressText .= ' (' . __('mjcp.issue.readyShortageNote', ['ready' => $readyCount, 'quota' => $quota]) . ')';
+                }
             } elseif ($readyCount === $quota) {
                 $healthStatus = 'on_track';
                 $badgeType = 'success';
@@ -672,6 +737,26 @@ class DashboardService
                 $progressText = __('mjcp.issue.readyOfQuota', ['count' => $readyCount, 'quota' => $quota]);
             }
 
+            // Estimate publication timeliness
+            $daysToTarget = (int) floor((strtotime($targetDate) - strtotime(date('Y-m-d'))) / 86400);
+            if ($readyCount >= $quota && $overdueInIssueCount === 0) {
+                $timelinessStatus = 'on_time';
+                $timelinessBadgeType = 'success';
+                $timelinessLabel = __('mjcp.issue.timeliness.onTime');
+            } elseif ($daysToTarget < 0 && $readyCount < $quota) {
+                $timelinessStatus = 'delayed';
+                $timelinessBadgeType = 'danger';
+                $timelinessLabel = __('mjcp.issue.timeliness.delayed');
+            } elseif ($overdueInIssueCount > 0 || ($daysToTarget <= 14 && $readyCount < $quota)) {
+                $timelinessStatus = 'at_risk';
+                $timelinessBadgeType = 'warning';
+                $timelinessLabel = __('mjcp.issue.timeliness.atRisk');
+            } else {
+                $timelinessStatus = 'on_time';
+                $timelinessBadgeType = 'success';
+                $timelinessLabel = __('mjcp.issue.timeliness.onTime');
+            }
+
             $progressPct = min(100, round(($effectiveCompareCount / max(1, $quota)) * 100));
 
             $cards[] = [
@@ -681,16 +766,21 @@ class DashboardService
                 'issueTitle' => $jInfo['name'] . ' ' . $issueCompact,
                 'issueIdentification' => $targetIssue ? $targetIssue['identification'] : $jInfo['name'] . ' ' . $issueCompact,
                 'targetDate' => $targetDate,
+                'targetDateFormatted' => $this->formatDateWithYear($targetDate, $locale),
                 'quota' => $quota,
                 'plottedCount' => $plottedCount,
                 'readyCount' => $readyCount,
                 'inProgressCount' => $inProgressCount,
+                'isUnderReadyQuota' => $isUnderReadyQuota,
                 'loaUploadedCount' => $loaUploadedCount,
                 'copyeditingDoneCount' => $copyeditingDoneCount,
                 'publishedCount' => $publishedCount,
                 'healthStatus' => $healthStatus,
                 'badgeType' => $badgeType,
                 'badgeLabel' => $badgeLabel,
+                'timelinessStatus' => $timelinessStatus,
+                'timelinessBadgeType' => $timelinessBadgeType,
+                'timelinessLabel' => $timelinessLabel,
                 'progressText' => $progressText,
                 'progressPct' => $progressPct,
                 'articles' => $articleDetails,
@@ -723,13 +813,58 @@ class DashboardService
         $acceptedCount = 0;
         $rejectedCount = 0;
         $publishedCount = 0;
-        $onTimeCount = 0;
+        $trackedTimedTotal = 0;
+        $trackedOnTimeTotal = 0;
         $totalTurnaroundDays = 0;
         $turnaroundSampleCount = 0;
 
-        // Build 6-month buckets ending at current month
+        // Per-stage on-time vs overdue tracking
+        $stageStats = [
+            'reviewRound1' => [
+                'stageKey' => 'reviewRound1',
+                'stageLabel' => __('mjcp.performance.stage.reviewRound1'),
+                'total' => 0,
+                'onTimeCount' => 0,
+                'overdueCount' => 0,
+                'onTimePct' => 100,
+                'overduePct' => 0,
+            ],
+            'reviewRound2Plus' => [
+                'stageKey' => 'reviewRound2Plus',
+                'stageLabel' => __('mjcp.performance.stage.reviewRound2Plus'),
+                'total' => 0,
+                'onTimeCount' => 0,
+                'overdueCount' => 0,
+                'onTimePct' => 100,
+                'overduePct' => 0,
+            ],
+            'copyediting' => [
+                'stageKey' => 'copyediting',
+                'stageLabel' => __('mjcp.performance.stage.copyediting'),
+                'total' => 0,
+                'onTimeCount' => 0,
+                'overdueCount' => 0,
+                'onTimePct' => 100,
+                'overduePct' => 0,
+            ],
+        ];
+
+        // Per-journal comparison map
+        $journalComp = [];
+
+        // Respect selected period when determining monthly bucket count
+        $period = isset($filters['period']) ? (string) $filters['period'] : 'all';
+        $monthCount = 6;
+        if ($period === '30d') {
+            $monthCount = 3;
+        } elseif ($period === '90d') {
+            $monthCount = 4;
+        } elseif ($period === '365d') {
+            $monthCount = 12;
+        }
+
         $monthlyBuckets = [];
-        for ($i = 5; $i >= 0; $i--) {
+        for ($i = $monthCount - 1; $i >= 0; $i--) {
             $ts = strtotime("-$i months", strtotime(date('Y-m-01')));
             $ym = date('Y-m', $ts);
             $monthlyBuckets[$ym] = [
@@ -744,21 +879,60 @@ class DashboardService
 
         foreach ($rows as $r) {
             $totalSubmissions++;
+            $cid = (int) $r->context_id;
             $isAcc = (int) $r->is_accepted === 1;
             $isDec = (int) $r->is_declined === 1;
             $isPub = (int) $r->is_published === 1;
+            $bucket = (string) $r->pipeline_bucket;
+            $isOverdue = (string) $r->bottleneck_status === 'overdue';
+
+            if (!isset($journalComp[$cid])) {
+                $journalComp[$cid] = [
+                    'contextId' => $cid,
+                    'journalName' => (string) $r->journal_name,
+                    'submitted' => 0,
+                    'accepted' => 0,
+                    'rejected' => 0,
+                    'published' => 0,
+                    'turnaroundSum' => 0,
+                    'turnaroundCount' => 0,
+                    'timedTotal' => 0,
+                    'timedOnTime' => 0,
+                ];
+            }
+            $journalComp[$cid]['submitted']++;
 
             if ($isAcc) {
                 $acceptedCount++;
+                $journalComp[$cid]['accepted']++;
             }
             if ($isDec) {
                 $rejectedCount++;
+                $journalComp[$cid]['rejected']++;
             }
             if ($isPub) {
                 $publishedCount++;
+                $journalComp[$cid]['published']++;
             }
-            if ($r->bottleneck_status !== 'overdue') {
-                $onTimeCount++;
+
+            // Track on-time vs overdue specifically on timed editorial stages (Review R1, Review R2+, Copyediting)
+            $timedStageKey = null;
+            if ($bucket === 'review' || $bucket === 'revision') {
+                $timedStageKey = (int) $r->current_round <= 1 ? 'reviewRound1' : 'reviewRound2Plus';
+            } elseif ($bucket === 'copyediting') {
+                $timedStageKey = 'copyediting';
+            }
+            if ($timedStageKey !== null) {
+                $trackedTimedTotal++;
+                $journalComp[$cid]['timedTotal']++;
+                $stageStats[$timedStageKey]['total']++;
+                if ($isOverdue) {
+                    $stageStats[$timedStageKey]['overdueCount']++;
+                } else {
+                    $trackedOnTimeTotal++;
+                    $journalComp[$cid]['timedOnTime']++;
+                    $stageStats[$timedStageKey]['onTimeCount']++;
+                }
             }
 
             // Average days from submission to publication
@@ -769,6 +943,8 @@ class DashboardService
                     $diffDays = (int) round(($pubTs - $subTs) / 86400);
                     $totalTurnaroundDays += $diffDays;
                     $turnaroundSampleCount++;
+                    $journalComp[$cid]['turnaroundSum'] += $diffDays;
+                    $journalComp[$cid]['turnaroundCount']++;
                 }
             }
 
@@ -777,11 +953,17 @@ class DashboardService
                 $subYm = substr((string) $r->date_submitted, 0, 7);
                 if (isset($monthlyBuckets[$subYm])) {
                     $monthlyBuckets[$subYm]['submitted']++;
-                    if ($isAcc) {
-                        $monthlyBuckets[$subYm]['accepted']++;
-                    }
                     if ($isDec) {
                         $monthlyBuckets[$subYm]['rejected']++;
+                    }
+                }
+            }
+            if ($isAcc) {
+                $accDate = !empty($r->date_accepted) ? (string) $r->date_accepted : (string) $r->date_submitted;
+                if ($accDate !== '') {
+                    $accYm = substr($accDate, 0, 7);
+                    if (isset($monthlyBuckets[$accYm])) {
+                        $monthlyBuckets[$accYm]['accepted']++;
                     }
                 }
             }
@@ -793,11 +975,36 @@ class DashboardService
             }
         }
 
+        foreach ($stageStats as $sKey => &$st) {
+            if ($st['total'] > 0) {
+                $st['onTimePct'] = (int) round(($st['onTimeCount'] / $st['total']) * 100);
+                $st['overduePct'] = 100 - $st['onTimePct'];
+            }
+        }
+        unset($st);
+
+        $journalComparisonList = [];
+        foreach ($journalComp as $jc) {
+            $jDecided = $jc['accepted'] + $jc['rejected'];
+            $jDenom = $jDecided > 0 ? $jDecided : max(1, $jc['submitted']);
+            $journalComparisonList[] = [
+                'contextId' => $jc['contextId'],
+                'journalName' => $jc['journalName'],
+                'submitted' => $jc['submitted'],
+                'accepted' => $jc['accepted'],
+                'rejected' => $jc['rejected'],
+                'published' => $jc['published'],
+                'acceptanceRate' => $jc['submitted'] > 0 ? (int) round(($jc['accepted'] / $jDenom) * 100) : 0,
+                'avgTurnaroundDays' => $jc['turnaroundCount'] > 0 ? (int) round($jc['turnaroundSum'] / $jc['turnaroundCount']) : 0,
+                'onTimeRate' => $jc['timedTotal'] > 0 ? (int) round(($jc['timedOnTime'] / $jc['timedTotal']) * 100) : 100,
+            ];
+        }
+
         $decidedTotal = $acceptedCount + $rejectedCount;
         $denom = $decidedTotal > 0 ? $decidedTotal : max(1, $totalSubmissions);
         $acceptanceRate = $totalSubmissions > 0 ? (int) round(($acceptedCount / $denom) * 100) : 0;
         $rejectionRate = $totalSubmissions > 0 ? (int) round(($rejectedCount / $denom) * 100) : 0;
-        $onTimeRate = $totalSubmissions > 0 ? (int) round(($onTimeCount / $totalSubmissions) * 100) : 100;
+        $onTimeRate = $trackedTimedTotal > 0 ? (int) round(($trackedOnTimeTotal / $trackedTimedTotal) * 100) : 100;
         $avgSubmitToPublishDays = $turnaroundSampleCount > 0 ? (int) round($totalTurnaroundDays / $turnaroundSampleCount) : 0;
 
         // Compute bar height percentages for responsive rendering
@@ -820,6 +1027,8 @@ class DashboardService
             'acceptanceRate' => $acceptanceRate,
             'rejectionRate' => $rejectionRate,
             'onTimeRate' => $onTimeRate,
+            'stageOnTimeStats' => array_values($stageStats),
+            'journalComparison' => $journalComparisonList,
             'monthlyTrends' => array_values($monthlyBuckets),
             'chartJson' => json_encode(array_values($monthlyBuckets)),
         ];
@@ -828,7 +1037,7 @@ class DashboardService
     /**
      * Build a filtered query builder against `mjcp_article_data`.
      *
-     * @param array $filters {contextId, period}
+     * @param array $filters {contextId, period, search, includeActiveBottlenecks}
      * @return \Illuminate\Database\Query\Builder
      */
     protected function _buildFilteredArticleQuery($filters = [])
@@ -837,6 +1046,19 @@ class DashboardService
 
         if (isset($filters['contextId']) && $filters['contextId'] !== 'all' && $filters['contextId'] !== '' && (int) $filters['contextId'] > 0) {
             $query->where('context_id', '=', (int) $filters['contextId']);
+        }
+
+        if (isset($filters['search']) && trim((string) $filters['search']) !== '') {
+            $term = '%' . strtolower(trim((string) $filters['search'])) . '%';
+            $rawTrim = trim((string) $filters['search']);
+            $query->where(function ($q) use ($term, $rawTrim) {
+                $q->whereRaw('LOWER(journal_name) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(journal_path) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(article_title) LIKE ?', [$term]);
+                if (ctype_digit($rawTrim)) {
+                    $q->orWhere('submission_id', '=', (int) $rawTrim);
+                }
+            });
         }
 
         if (isset($filters['period']) && $filters['period'] !== 'all' && $filters['period'] !== '') {
@@ -854,8 +1076,13 @@ class DashboardService
 
             if ($days > 0) {
                 $cutoff = date('Y-m-d 00:00:00', strtotime("-$days days"));
-                $query->where(function ($q) use ($cutoff) {
-                    $q->where('date_submitted', '>=', $cutoff)->orWhere('stage_entry_date', '>=', substr($cutoff, 0, 10))->orWhereNull('date_submitted');
+                $includeActiveBottlenecks = !empty($filters['includeActiveBottlenecks']);
+                $query->where(function ($q) use ($cutoff, $includeActiveBottlenecks) {
+                    $q->where('date_submitted', '>=', $cutoff)->orWhere('stage_entry_date', '>=', substr($cutoff, 0, 10));
+                    if ($includeActiveBottlenecks) {
+                        // Never hide long-stuck overdue manuscripts in Bottleneck view when a short period is active
+                        $q->orWhere('bottleneck_status', '=', 'overdue');
+                    }
                 });
             }
         }

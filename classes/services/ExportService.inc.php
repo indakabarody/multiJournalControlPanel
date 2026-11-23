@@ -135,7 +135,7 @@ class ExportService
                     __('mjcp.payment.notes'),
                     __('mjcp.payment.proof'),
                 ];
-                $colWidths = [42, 95, 165, 110, 75, 65, 85, 80, 65];
+                $colWidths = [42, 92, 158, 108, 72, 62, 85, 78, 63];
                 $items = isset($data['items']) ? $data['items'] : [];
                 foreach ($items as $it) {
                     $tableRows[] = [
@@ -176,7 +176,7 @@ class ExportService
                     __('mjcp.links.url'),
                     __('mjcp.links.expiresAt'),
                 ];
-                $colWidths = [45, 95, 175, 75, 80, 75, 165, 70];
+                $colWidths = [45, 92, 168, 72, 78, 72, 163, 70];
                 $items = isset($data['items']) ? $data['items'] : [];
                 foreach ($items as $it) {
                     $tableRows[] = [
@@ -201,7 +201,7 @@ class ExportService
                     __('mjcp.testimonial.consentStatus'),
                     __('mjcp.testimonial.submittedAt'),
                 ];
-                $colWidths = [270, 120, 130, 100, 85, 75];
+                $colWidths = [260, 118, 127, 98, 82, 75];
                 foreach ((array) $data as $row) {
                     $tableRows[] = [
                         (string) $row['testimonialText'],
@@ -225,8 +225,9 @@ class ExportService
                     __('mjcp.pipeline.copyediting'),
                     __('mjcp.pipeline.production'),
                     __('mjcp.pipeline.published'),
+                    __('mjcp.pipeline.declined'),
                 ];
-                $colWidths = [180, 80, 80, 80, 80, 85, 80, 80];
+                $colWidths = [155, 74, 74, 74, 74, 80, 76, 74, 74];
                 $rows = isset($data['pipeline']) ? $data['pipeline'] : (array) $data;
                 foreach ($rows as $r) {
                     $tableRows[] = [
@@ -238,6 +239,7 @@ class ExportService
                         (string) $r['copyediting'],
                         (string) $r['production'],
                         (string) $r['published'],
+                        (string) (isset($r['declined']) ? $r['declined'] : 0),
                     ];
                 }
                 if (isset($data['summary'])) {
@@ -262,6 +264,14 @@ class ExportService
         $baseName = 'mjcp-' . $mod . '-' . $dateStamp;
 
         if ($fmt === 'csv') {
+            if ($mod === 'payments' && !empty($data['recapByIssue'])) {
+                $allSheetRows[] = [];
+                $allSheetRows[] = [__('mjcp.payment.recapByIssueHeading')];
+                $allSheetRows[] = [__('mjcp.issue.targetIssue'), __('mjcp.payment.card.paid'), __('mjcp.payment.card.unpaid'), __('mjcp.payment.amount')];
+                foreach ($data['recapByIssue'] as $irec) {
+                    $allSheetRows[] = [(string) $irec['issueLabel'], (string) $irec['paidCount'], (string) $irec['unpaidCount'], (string) $irec['totalAmountFormatted']];
+                }
+            }
             $this->_sendCsvDownload($baseName . '.csv', $allSheetRows);
         } elseif ($fmt === 'pdf') {
             $this->_sendPdfDownload($baseName . '.pdf', $metadata, $summaryLine, $headers, $tableRows, $colWidths);
@@ -273,6 +283,20 @@ class ExportService
                     'headerRowIndex' => 6,
                 ],
             ];
+            if ($mod === 'payments' && !empty($data['recapByIssue'])) {
+                $issueRecapRows = array_merge(
+                    $metaRows,
+                    [[__('mjcp.issue.targetIssue'), __('mjcp.payment.card.paid'), __('mjcp.payment.card.unpaid'), __('mjcp.payment.amount')]],
+                    array_map(function ($irec) {
+                        return [(string) $irec['issueLabel'], (string) $irec['paidCount'], (string) $irec['unpaidCount'], (string) $irec['totalAmountFormatted']];
+                    }, $data['recapByIssue'])
+                );
+                $sheets[] = [
+                    'name' => __('mjcp.export.sheet.recapByIssue'),
+                    'rows' => $issueRecapRows,
+                    'headerRowIndex' => 6,
+                ];
+            }
             $this->_sendXlsxDownload($baseName . '.xlsx', $sheets);
         }
     }
@@ -295,7 +319,8 @@ class ExportService
         $out = fopen('php://output', 'w');
         fwrite($out, "\xEF\xBB\xBF");
         foreach ($rows as $row) {
-            fputcsv($out, $row);
+            $safeRow = array_map([$this, '_sanitizeSpreadsheetCell'], (array) $row);
+            fputcsv($out, $safeRow);
         }
         fclose($out);
         exit;
@@ -456,7 +481,7 @@ class ExportService
                     $xml .= '<c r="' . $colRef . '" s="' . $styleId . '" t="n"><v>' . $valStr . '</v></c>';
                 } else {
                     $xml .= '<c r="' . $colRef . '" s="' . $styleId . '" t="inlineStr"><is><t xml:space="preserve">'
-                        . $this->_xmlEscape($valStr)
+                        . $this->_xmlEscape($this->_sanitizeSpreadsheetCell($valStr))
                         . '</t></is></c>';
                 }
             }
@@ -665,6 +690,36 @@ class ExportService
             $n = (int) floor($n / 26) - 1;
         }
         return $letter;
+    }
+
+    /**
+     * Neutralize spreadsheet formula injection payloads in CSV/XLSX cells.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function sanitizeSpreadsheetCell($value)
+    {
+        return $this->_sanitizeSpreadsheetCell($value);
+    }
+
+    /**
+     * Prefix potentially dangerous leading formula characters (`=`, `+`, `-`, `@`, tab, CR) with a single quote.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    protected function _sanitizeSpreadsheetCell($value)
+    {
+        $str = (string) $value;
+        if ($str === '' || is_numeric($str)) {
+            return $str;
+        }
+        $first = $str[0];
+        if ($first === '=' || $first === '+' || $first === '-' || $first === '@' || $first === "\t" || $first === "\r") {
+            return "'" . $str;
+        }
+        return $str;
     }
 
     /**

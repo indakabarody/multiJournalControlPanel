@@ -89,6 +89,7 @@ class PaymentService
         $totalAmount = 0;
 
         $recapByJournal = [];
+        $recapByIssue = [];
         $items = [];
 
         foreach ($rows as $r) {
@@ -131,6 +132,29 @@ class PaymentService
                 $recapByJournal[$ctxId]['totalAmount'] += $amount;
             } else {
                 $recapByJournal[$ctxId]['unpaidCount']++;
+            }
+
+            // Per-issue recap
+            $issueId = !empty($r->target_issue_id) ? (int) $r->target_issue_id : 0;
+            $issueKey = $ctxId . ':' . $issueId;
+            if (!isset($recapByIssue[$issueKey])) {
+                $issueLabel = !empty($r->target_issue_label) ? (string) $r->journal_name . ' ' . (string) $r->target_issue_label : (string) $r->journal_name . ' - ' . __('mjcp.issue.unassignedIssue');
+                $recapByIssue[$issueKey] = [
+                    'contextId' => $ctxId,
+                    'issueId' => $issueId,
+                    'journalName' => (string) $r->journal_name,
+                    'issueLabel' => $issueLabel,
+                    'paidCount' => 0,
+                    'unpaidCount' => 0,
+                    'totalAmount' => 0,
+                    'totalAmountFormatted' => $this->formatCurrency(0),
+                ];
+            }
+            if ($payStatus === 'paid') {
+                $recapByIssue[$issueKey]['paidCount']++;
+                $recapByIssue[$issueKey]['totalAmount'] += $amount;
+            } else {
+                $recapByIssue[$issueKey]['unpaidCount']++;
             }
 
             // Apply quick filter
@@ -192,6 +216,11 @@ class PaymentService
         }
         unset($rec);
 
+        foreach ($recapByIssue as $ik => &$irec) {
+            $irec['totalAmountFormatted'] = $this->formatCurrency($irec['totalAmount']);
+        }
+        unset($irec);
+
         return [
             'summary' => [
                 'paidCount' => $paidCount,
@@ -202,6 +231,7 @@ class PaymentService
             ],
             'items' => $items,
             'recapByJournal' => array_values($recapByJournal),
+            'recapByIssue' => array_values($recapByIssue),
         ];
     }
 
@@ -244,6 +274,9 @@ class PaymentService
         foreach ($paymentLogRows as $pl) {
             $oldSt = strtolower((string) $pl->old_status) === 'paid' ? 'paid' : 'unpaid';
             $newSt = strtolower((string) $pl->new_status) === 'paid' ? 'paid' : 'unpaid';
+            $oldProof = !empty($pl->old_proof_file_path) ? (string) $pl->old_proof_file_path : '';
+            $newProof = !empty($pl->new_proof_file_path) ? (string) $pl->new_proof_file_path : '';
+            $proofChanged = $oldProof !== $newProof;
             $paymentLogs[] = [
                 'id' => (int) $pl->payment_log_id,
                 'oldStatus' => $oldSt,
@@ -251,10 +284,16 @@ class PaymentService
                 'newStatus' => $newSt,
                 'newStatusLabel' => $newSt === 'paid' ? __('mjcp.payment.status.paid') : __('mjcp.payment.status.unpaid'),
                 'oldAmount' => (int) $pl->old_amount,
+                'oldAmountFormatted' => $this->formatCurrency((int) $pl->old_amount),
                 'newAmount' => (int) $pl->new_amount,
                 'newAmountFormatted' => $this->formatCurrency((int) $pl->new_amount),
                 'oldNotes' => (string) $pl->old_notes,
                 'newNotes' => (string) $pl->new_notes,
+                'proofChanged' => $proofChanged,
+                'hasOldProof' => $oldProof !== '' && is_readable($oldProof),
+                'hasNewProof' => $newProof !== '' && is_readable($newProof),
+                'oldProofName' => $oldProof !== '' ? basename($oldProof) : '',
+                'newProofName' => $newProof !== '' ? basename($newProof) : '',
                 'changedByUsername' => (string) $pl->changed_by_username,
                 'changedAt' => (string) $pl->changed_at,
                 'changedAtFormatted' => $this->_dashboardService->formatDateTimeShort($pl->changed_at, $locale),
@@ -607,6 +646,16 @@ class PaymentService
             return ['ok' => false, 'message' => __('mjcp.loa.error.numberRequired')];
         }
 
+        // Prevent duplicate active LOA numbers across different manuscripts
+        $duplicateLoa = Capsule::table('mjcp_loa_files')
+            ->where('loa_number', '=', $cleanLoaNum)
+            ->where('is_current', '=', 1)
+            ->where('submission_id', '!=', $subId)
+            ->exists();
+        if ($duplicateLoa) {
+            return ['ok' => false, 'message' => __('mjcp.loa.error.duplicateNumber')];
+        }
+
         $article = Capsule::table('mjcp_article_data')->where('submission_id', '=', $subId)->first();
         if (!$article) {
             return ['ok' => false, 'message' => __('mjcp.payment.error.articleNotFound')];
@@ -879,8 +928,12 @@ class PaymentService
             $shortTokenPath = $hasToken ? '.../confirm/' . substr($tokenStr, 0, 8) : __('mjcp.links.notCreated');
 
             $fullLinkUrl = '';
-            if ($hasToken && $dispatcher) {
-                $fullLinkUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$tokenStr]);
+            $manageLoaUrl = '';
+            if ($dispatcher) {
+                if ($hasToken) {
+                    $fullLinkUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$tokenStr]);
+                }
+                $manageLoaUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'paymentDetail', [$subId]);
             }
 
             $hasLoa = $r->loa_status === 'uploaded';
@@ -903,6 +956,7 @@ class PaymentService
                 'token' => $tokenStr,
                 'shortLinkText' => $shortTokenPath,
                 'fullLinkUrl' => $fullLinkUrl,
+                'manageLoaUrl' => $manageLoaUrl,
                 'expiresAt' => $hasToken ? (string) $r->expires_at : '',
                 'expiresAtFormatted' => $hasToken && !empty($r->expires_at) ? $this->_dashboardService->formatDateWithYear($r->expires_at, $locale) : '-',
             ];
@@ -983,12 +1037,13 @@ class PaymentService
      */
     public function submitAuthorConfirmationForm($rawToken, $input, $uploadedFile, $clientIp = '')
     {
-        $resolved = $this->resolveAuthorToken($rawToken);
+        $submittedLocale = !empty($input['locale']) ? trim((string) $input['locale']) : 'en_US';
+        $resolved = $this->resolveAuthorToken($rawToken, $submittedLocale);
         if (empty($resolved['isValid'])) {
             return [
                 'ok' => false,
-                'errors' => [__('mjcp.authorForm.error.tokenInvalidOrExpired')],
-                'message' => __('mjcp.authorForm.error.tokenInvalidOrExpired'),
+                'errors' => [__('mjcp.authorForm.error.tokenInvalidOrExpired', [], $submittedLocale)],
+                'message' => __('mjcp.authorForm.error.tokenInvalidOrExpired', [], $submittedLocale),
             ];
         }
 
@@ -1002,26 +1057,25 @@ class PaymentService
         $whatsapp = trim((string) (isset($input['whatsappNumber']) ? $input['whatsappNumber'] : ''));
         $testimonial = trim((string) (isset($input['testimonial']) ? $input['testimonial'] : ''));
         $consent = !empty($input['testimonialConsent']) ? 1 : 0;
-        $submittedLocale = !empty($input['locale']) ? trim((string) $input['locale']) : 'en_US';
 
         $errors = [];
         if ($fullName === '') {
-            $errors[] = __('mjcp.authorForm.error.fullNameRequired');
+            $errors[] = __('mjcp.authorForm.error.fullNameRequired', [], $submittedLocale);
         }
         if ($affiliation === '') {
-            $errors[] = __('mjcp.authorForm.error.affiliationRequired');
+            $errors[] = __('mjcp.authorForm.error.affiliationRequired', [], $submittedLocale);
         }
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = __('mjcp.authorForm.error.invalidEmail');
+            $errors[] = __('mjcp.authorForm.error.invalidEmail', [], $submittedLocale);
         }
         if ($whatsapp === '' || !preg_match('/^\+?[0-9][0-9\s\-]{7,19}$/', $whatsapp)) {
-            $errors[] = __('mjcp.authorForm.error.invalidWhatsapp');
+            $errors[] = __('mjcp.authorForm.error.invalidWhatsapp', [], $submittedLocale);
         }
         if ($testimonial === '') {
-            $errors[] = __('mjcp.authorForm.error.testimonialRequired');
+            $errors[] = __('mjcp.authorForm.error.testimonialRequired', [], $submittedLocale);
         }
         if ($consent !== 1) {
-            $errors[] = __('mjcp.authorForm.error.consentRequired');
+            $errors[] = __('mjcp.authorForm.error.consentRequired', [], $submittedLocale);
         }
 
         // Optional transfer proof validation
@@ -1032,9 +1086,9 @@ class PaymentService
 
         if ($uploadedFile && !empty($uploadedFile['name']) && (int) $uploadedFile['error'] !== UPLOAD_ERR_NO_FILE) {
             if ((int) $uploadedFile['error'] !== UPLOAD_ERR_OK) {
-                $errors[] = __('mjcp.authorForm.error.fileUploadError');
+                $errors[] = __('mjcp.authorForm.error.fileUploadError', [], $submittedLocale);
             } else {
-                $storeRes = $this->storePrivateProofFile($subId, $ctxId, $uploadedFile);
+                $storeRes = $this->storePrivateProofFile($subId, $ctxId, $uploadedFile, $submittedLocale);
                 if (!$storeRes['ok']) {
                     $errors[] = $storeRes['message'];
                 } else {
@@ -1059,6 +1113,17 @@ class PaymentService
         $ipHash = $clientIp !== '' ? hash('sha256', $clientIp . '|mjcp_privacy_salt_2026') : null;
 
         $existingForm = Capsule::table('mjcp_author_forms')->where('submission_id', '=', $subId)->first();
+        $oldFormSnapshot = $existingForm
+            ? [
+                'fullNameAuthors' => (string) $existingForm->full_name_authors,
+                'affiliation' => (string) $existingForm->affiliation,
+                'email' => (string) $existingForm->correspondent_email,
+                'whatsapp' => (string) $existingForm->whatsapp_number,
+                'testimonial' => (string) $existingForm->testimonial,
+                'proofPath' => (string) $existingForm->transfer_proof_path,
+            ]
+            : null;
+
         $formPayload = [
             'submission_id' => $subId,
             'context_id' => $ctxId,
@@ -1087,10 +1152,11 @@ class PaymentService
             Capsule::table('mjcp_author_forms')->insert($formPayload);
         }
 
-        // Link proof file to mjcp_payments automatically if uploaded
+        // Link proof file to mjcp_payments automatically if uploaded, preserving previous proof in mjcp_payment_logs
         $paymentRow = Capsule::table('mjcp_payments')->where('submission_id', '=', $subId)->first();
         if ($paymentRow) {
             if ($proofPath !== null) {
+                $oldProofPath = !empty($paymentRow->proof_file_path) ? (string) $paymentRow->proof_file_path : null;
                 Capsule::table('mjcp_payments')
                     ->where('payment_id', '=', (int) $paymentRow->payment_id)
                     ->update([
@@ -1100,20 +1166,58 @@ class PaymentService
                         'proof_file_size' => $proofSize,
                         'updated_at' => $now,
                     ]);
+
+                Capsule::table('mjcp_payment_logs')->insert([
+                    'payment_id' => (int) $paymentRow->payment_id,
+                    'submission_id' => $subId,
+                    'context_id' => $ctxId,
+                    'old_status' => (string) $paymentRow->payment_status,
+                    'new_status' => (string) $paymentRow->payment_status,
+                    'old_amount' => (int) $paymentRow->amount,
+                    'new_amount' => (int) $paymentRow->amount,
+                    'old_notes' => (string) $paymentRow->notes,
+                    'new_notes' => (string) $paymentRow->notes,
+                    'old_proof_file_path' => $oldProofPath,
+                    'new_proof_file_path' => $proofPath,
+                    'changed_by' => null,
+                    'changed_by_username' => $fullName,
+                    'changed_at' => $now,
+                ]);
             }
         } else {
-            Capsule::table('mjcp_payments')->insert([
-                'submission_id' => $subId,
-                'context_id' => $ctxId,
-                'payment_status' => 'unpaid',
-                'amount' => 0,
-                'proof_file_path' => $proofPath,
-                'proof_original_name' => $proofOrigName,
-                'proof_mime_type' => $proofMime,
-                'proof_file_size' => $proofSize,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            $newPayId = (int) Capsule::table('mjcp_payments')->insertGetId(
+                [
+                    'submission_id' => $subId,
+                    'context_id' => $ctxId,
+                    'payment_status' => 'unpaid',
+                    'amount' => 0,
+                    'proof_file_path' => $proofPath,
+                    'proof_original_name' => $proofOrigName,
+                    'proof_mime_type' => $proofMime,
+                    'proof_file_size' => $proofSize,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+                'payment_id',
+            );
+            if ($proofPath !== null) {
+                Capsule::table('mjcp_payment_logs')->insert([
+                    'payment_id' => $newPayId,
+                    'submission_id' => $subId,
+                    'context_id' => $ctxId,
+                    'old_status' => 'unpaid',
+                    'new_status' => 'unpaid',
+                    'old_amount' => 0,
+                    'new_amount' => 0,
+                    'old_notes' => '',
+                    'new_notes' => '',
+                    'old_proof_file_path' => null,
+                    'new_proof_file_path' => $proofPath,
+                    'changed_by' => null,
+                    'changed_by_username' => $fullName,
+                    'changed_at' => $now,
+                ]);
+            }
         }
 
         // Upsert testimonial into mjcp_testimonials
@@ -1136,12 +1240,22 @@ class PaymentService
             Capsule::table('mjcp_testimonials')->insert($testiPayload);
         }
 
-        $this->_dao->logAudit($ctxId, $subId, null, $fullName, 'author_confirmation_submitted', 'mjcp_author_forms', null, ['email' => $email, 'hasProof' => $proofPath !== null], $ipHash);
+        $this->_dao->logAudit(
+            $ctxId,
+            $subId,
+            null,
+            $fullName,
+            $existingForm ? 'author_confirmation_updated' : 'author_confirmation_submitted',
+            'mjcp_author_forms',
+            $oldFormSnapshot,
+            ['fullNameAuthors' => $fullName, 'affiliation' => $affiliation, 'email' => $email, 'whatsapp' => $whatsapp, 'hasProof' => $proofPath !== null],
+            $ipHash,
+        );
 
         return [
             'ok' => true,
             'errors' => [],
-            'message' => __('mjcp.authorForm.submittedSuccess'),
+            'message' => __('mjcp.authorForm.submittedSuccess', [], $submittedLocale),
         ];
     }
 
@@ -1231,22 +1345,25 @@ class PaymentService
      * @param array $uploadedFile
      * @return array
      */
-    public function storePrivateProofFile($submissionId, $contextId, $uploadedFile)
+    public function storePrivateProofFile($submissionId, $contextId, $uploadedFile, $locale = null)
     {
         $maxSize = (int) $this->_plugin->getSetting(0, 'maxUploadSizeBytes');
         if ($maxSize <= 0) {
             $maxSize = self::MAX_PROOF_SIZE_BYTES;
         }
 
-        $fileSize = isset($uploadedFile['size']) ? (int) $uploadedFile['size'] : 0;
+        $tmpPath = isset($uploadedFile['tmp_name']) ? (string) $uploadedFile['tmp_name'] : '';
+        $diskSize = $tmpPath !== '' && is_file($tmpPath) ? (int) filesize($tmpPath) : 0;
+        $reportedSize = isset($uploadedFile['size']) ? (int) $uploadedFile['size'] : 0;
+        $fileSize = $diskSize > 0 ? $diskSize : $reportedSize;
+
         if ($fileSize <= 0 || $fileSize > $maxSize) {
             return [
                 'ok' => false,
-                'message' => __('mjcp.upload.error.fileTooLarge', ['maxKb' => round($maxSize / 1024)]),
+                'message' => __('mjcp.upload.error.fileTooLarge', ['maxKb' => round($maxSize / 1024), 'maxMb' => round($maxSize / 1048576, 1)], $locale),
             ];
         }
 
-        $tmpPath = $uploadedFile['tmp_name'];
         $origName = basename((string) $uploadedFile['name']);
         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
@@ -1254,7 +1371,7 @@ class PaymentService
         if (!in_array($ext, $allowedExtensions, true)) {
             return [
                 'ok' => false,
-                'message' => __('mjcp.upload.error.invalidProofFormat'),
+                'message' => __('mjcp.upload.error.invalidProofFormat', [], $locale),
             ];
         }
 
@@ -1264,7 +1381,7 @@ class PaymentService
         if (!in_array($detectedMime, $allowedMimes, true)) {
             return [
                 'ok' => false,
-                'message' => __('mjcp.upload.error.invalidProofFormat'),
+                'message' => __('mjcp.upload.error.invalidProofFormat', [], $locale),
             ];
         }
 
@@ -1276,7 +1393,7 @@ class PaymentService
         if (!@move_uploaded_file($tmpPath, $destPath) && !@copy($tmpPath, $destPath)) {
             return [
                 'ok' => false,
-                'message' => __('mjcp.upload.error.storageFailed'),
+                'message' => __('mjcp.upload.error.storageFailed', [], $locale),
             ];
         }
 
@@ -1301,7 +1418,11 @@ class PaymentService
      */
     public function storePrivateLoaFile($submissionId, $contextId, $uploadedFile)
     {
-        $fileSize = isset($uploadedFile['size']) ? (int) $uploadedFile['size'] : 0;
+        $tmpPath = isset($uploadedFile['tmp_name']) ? (string) $uploadedFile['tmp_name'] : '';
+        $diskSize = $tmpPath !== '' && is_file($tmpPath) ? (int) filesize($tmpPath) : 0;
+        $reportedSize = isset($uploadedFile['size']) ? (int) $uploadedFile['size'] : 0;
+        $fileSize = $diskSize > 0 ? $diskSize : $reportedSize;
+
         if ($fileSize <= 0 || $fileSize > self::MAX_LOA_SIZE_BYTES) {
             return [
                 'ok' => false,
@@ -1309,7 +1430,6 @@ class PaymentService
             ];
         }
 
-        $tmpPath = $uploadedFile['tmp_name'];
         $origName = basename((string) $uploadedFile['name']);
         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
         if ($ext !== 'pdf') {

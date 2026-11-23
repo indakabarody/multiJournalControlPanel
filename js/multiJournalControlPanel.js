@@ -11,6 +11,17 @@
 (function () {
 	'use strict';
 
+	function bindSettingsModalAjaxForm() {
+		if (!window.jQuery || !window.jQuery.fn || !window.jQuery.fn.pkpHandler) {
+			return;
+		}
+		var $form = window.jQuery('#mjcpPluginSettingsForm');
+		if ($form.length && $form.attr('data-mjcp-ajax-bound') !== '1') {
+			$form.attr('data-mjcp-ajax-bound', '1');
+			$form.pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
+		}
+	}
+
 	function initMultiJournalControlPanel() {
 		// 1. Apply dynamic progress widths and bar chart heights from data-* attributes
 		var progressFills = document.querySelectorAll('.mjcp-progress-fill[data-width]');
@@ -29,9 +40,20 @@
 			}
 		});
 
-		// Initialize AjaxFormHandler if modal form is present in OJS backend
-		if (window.jQuery && window.jQuery('#mjcpPluginSettingsForm').length && window.jQuery.fn.pkpHandler) {
-			window.jQuery('#mjcpPluginSettingsForm').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
+		// Initialize AjaxFormHandler for OJS Plugin Settings AjaxModal (both on load and after AJAX modal injection)
+		bindSettingsModalAjaxForm();
+		if (window.jQuery) {
+			window.jQuery(document).ajaxComplete(function () {
+				bindSettingsModalAjaxForm();
+			});
+		}
+		if (typeof MutationObserver !== 'undefined' && document.body) {
+			var modalObserver = new MutationObserver(function () {
+				if (document.getElementById('mjcpPluginSettingsForm')) {
+					bindSettingsModalAjaxForm();
+				}
+			});
+			modalObserver.observe(document.body, { childList: true, subtree: true });
 		}
 
 		var root = document.getElementById('mjcpControlPanelRoot');
@@ -49,6 +71,9 @@
 		var addHolidayUrl = root.getAttribute('data-add-holiday-url') || '';
 		var deleteHolidayUrl = root.getAttribute('data-delete-holiday-url') || '';
 		var copiedText = root.getAttribute('data-copied-text') || '';
+		var selectOneText = root.getAttribute('data-select-one-text') || '';
+		var confirmRegenerateText = root.getAttribute('data-confirm-regenerate-text') || '';
+		var confirmDeactivateText = root.getAttribute('data-confirm-deactivate-text') || '';
 
 		// 2. Auto-submit filter dropdowns
 		var filterForm = document.getElementById('mjcpFilterForm');
@@ -140,6 +165,10 @@
 				if (!generateTokenUrl) {
 					return;
 				}
+				var hasToken = btn.getAttribute('data-has-token') === '1';
+				if (hasToken && confirmRegenerateText && !window.confirm(confirmRegenerateText)) {
+					return;
+				}
 				var subId = btn.getAttribute('data-submission-id');
 				btn.disabled = true;
 				postUrlEncoded(generateTokenUrl, {
@@ -148,6 +177,8 @@
 					ajax: 1
 				}).then(function () {
 					window.location.reload();
+				}).catch(function () {
+					btn.disabled = false;
 				});
 			});
 		});
@@ -157,16 +188,20 @@
 			bulkGenerateBtn.addEventListener('click', function () {
 				var checked = root.querySelectorAll('.mjcp-link-row-checkbox:checked');
 				var ids = [];
+				var includesExistingToken = false;
 				checked.forEach(function (cb) {
 					ids.push(cb.value);
+					if (cb.getAttribute('data-has-token') === '1') {
+						includesExistingToken = true;
+					}
 				});
 				if (ids.length === 0) {
-					var allBoxes = root.querySelectorAll('.mjcp-link-row-checkbox');
-					allBoxes.forEach(function (cb) {
-						ids.push(cb.value);
-					});
+					if (selectOneText) {
+						window.alert(selectOneText);
+					}
+					return;
 				}
-				if (ids.length === 0) {
+				if (includesExistingToken && confirmRegenerateText && !window.confirm(confirmRegenerateText)) {
 					return;
 				}
 				bulkGenerateBtn.disabled = true;
@@ -176,6 +211,8 @@
 					ajax: 1
 				}).then(function () {
 					window.location.reload();
+				}).catch(function () {
+					bulkGenerateBtn.disabled = false;
 				});
 			});
 		}
@@ -186,6 +223,9 @@
 				if (!revokeTokenUrl) {
 					return;
 				}
+				if (confirmDeactivateText && !window.confirm(confirmDeactivateText)) {
+					return;
+				}
 				var subId = btn.getAttribute('data-submission-id');
 				btn.disabled = true;
 				postUrlEncoded(revokeTokenUrl, {
@@ -194,6 +234,8 @@
 					ajax: 1
 				}).then(function () {
 					window.location.reload();
+				}).catch(function () {
+					btn.disabled = false;
 				});
 			});
 		});

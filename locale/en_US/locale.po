@@ -820,7 +820,7 @@ msgid "mjcp.authorForm.submittedSuccess"
 msgstr "Your payment confirmation has been submitted successfully."
 
 msgid "mjcp.upload.error.fileTooLarge"
-msgstr "File size exceeds the maximum limit ({$maxKb} KB / 1 MB)."
+msgstr "File size exceeds the maximum limit ({$maxKb} KB / {$maxMb} MB)."
 
 msgid "mjcp.upload.error.invalidProofFormat"
 msgstr "Unsupported file format. Please upload a JPG, PNG, or PDF file."
@@ -1067,3 +1067,130 @@ msgstr "Sunday"
 
 msgid "mjcp.authorForm.whatsappPlaceholder"
 msgstr "+62 8xx-xxxx-xxxx"
+
+
+msgid "mjcp.pipeline.declined"
+msgstr "Declined"
+
+msgid "mjcp.pipeline.sortLabel"
+msgstr "Sort journals"
+
+msgid "mjcp.pipeline.sort.nameAsc"
+msgstr "Journal name (A-Z)"
+
+msgid "mjcp.pipeline.sort.nameDesc"
+msgstr "Journal name (Z-A)"
+
+msgid "mjcp.pipeline.sort.allDesc"
+msgstr "Most articles"
+
+msgid "mjcp.pipeline.sort.overdueDesc"
+msgstr "Most overdue"
+
+msgid "mjcp.issue.timeliness.onTime"
+msgstr "Estimated on time"
+
+msgid "mjcp.issue.timeliness.atRisk"
+msgstr "At risk of delay"
+
+msgid "mjcp.issue.timeliness.delayed"
+msgstr "Delayed"
+
+msgid "mjcp.issue.targetDateLabel"
+msgstr "Target date: {$date}"
+
+msgid "mjcp.issue.articlesToggle"
+msgstr "Manuscript indicators ({$count})"
+
+msgid "mjcp.issue.copyeditingDone"
+msgstr "Done"
+
+msgid "mjcp.issue.copyeditingPending"
+msgstr "In progress"
+
+msgid "mjcp.issue.readyShortageNote"
+msgstr "Ready {$ready} of {$quota}"
+
+msgid "mjcp.issue.unassignedIssue"
+msgstr "Unassigned issue"
+
+msgid "mjcp.performance.stageOnTimeHeading"
+msgstr "On-time vs overdue per stage"
+
+msgid "mjcp.performance.onTimeCount"
+msgstr "On time"
+
+msgid "mjcp.performance.overdueCount"
+msgstr "Overdue"
+
+msgid "mjcp.performance.onTimePct"
+msgstr "On-time (%)"
+
+msgid "mjcp.performance.overduePct"
+msgstr "Overdue (%)"
+
+msgid "mjcp.performance.stage.reviewRound1"
+msgstr "Review round 1"
+
+msgid "mjcp.performance.stage.reviewRound2Plus"
+msgstr "Review round 2+"
+
+msgid "mjcp.performance.stage.copyediting"
+msgstr "Copyediting"
+
+msgid "mjcp.performance.monthlyTableHeading"
+msgstr "Monthly trend details"
+
+msgid "mjcp.performance.comparisonHeading"
+msgstr "Journal comparison"
+
+msgid "mjcp.payment.recapByIssueHeading"
+msgstr "Payment Recap per Issue"
+
+msgid "mjcp.payment.historyProofOld"
+msgstr "Previous proof"
+
+msgid "mjcp.payment.historyProofNew"
+msgstr "New proof"
+
+msgid "mjcp.payment.historyAmountChange"
+msgstr "{$old} -> {$new}"
+
+msgid "mjcp.payment.historyNotesChange"
+msgstr "Notes: {$old} -> {$new}"
+
+msgid "mjcp.links.regenerateBtn"
+msgstr "Regenerate"
+
+msgid "mjcp.links.manageLoaBtn"
+msgstr "Manage LOA"
+
+msgid "mjcp.links.selectAtLeastOne"
+msgstr "Please select at least one manuscript first."
+
+msgid "mjcp.links.confirmRegenerate"
+msgstr "Regenerating this link will deactivate the previous author link. Continue?"
+
+msgid "mjcp.links.confirmDeactivate"
+msgstr "Deactivate this author link? The author will no longer be able to access it."
+
+msgid "mjcp.loa.error.duplicateNumber"
+msgstr "This LOA number is already assigned to another manuscript."
+
+msgid "mjcp.authorForm.loaPendingUploadNote"
+msgstr "Your payment has been verified. Please wait while the Journal Manager uploads your LOA file."
+
+msgid "mjcp.authorForm.loaStatusPendingUpload"
+msgstr "Awaiting LOA upload"
+
+msgid "mjcp.authorForm.error.sessionExpired"
+msgstr "Your form session has expired. Please review your entries and submit again."
+
+msgid "mjcp.export.filterSummaryDetailed"
+msgstr "Journal: {$journal} | Period: {$period} | Filter: {$filter} | Search: {$search}"
+
+msgid "mjcp.export.sheet.recapByIssue"
+msgstr "Recap per Issue"
+
+msgid "mjcp.settings.unknownUsernamesWarning"
+msgstr "Settings saved, but the following usernames were not found in OJS users: {$usernames}"

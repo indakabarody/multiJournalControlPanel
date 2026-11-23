@@ -91,7 +91,12 @@ class SynchronizationService
         $journalsSynced = 0;
 
         $request = Application::get()->getRequest();
+        $dispatcher = $request && method_exists($request, 'getDispatcher') ? $request->getDispatcher() : null;
         $baseUrl = $request ? $request->getBaseUrl() : '';
+        if ($baseUrl === '') {
+            $baseUrl = (string) Config::getVar('general', 'base_url', '');
+        }
+        $restfulUrls = (bool) Config::getVar('general', 'restful_urls', false);
         $timeZoneName = Config::getVar('general', 'time_zone', 'UTC');
         $configuredWorkingDays = $this->_plugin ? $this->_plugin->getSetting(0, 'workingDays') : null;
         if (empty($configuredWorkingDays)) {
@@ -119,16 +124,26 @@ class SynchronizationService
 
                     $title = isset($batch['titles'][$subId]) && $batch['titles'][$subId] !== '' ? $batch['titles'][$subId] : __('mjcp.common.untitledManuscript', ['id' => $subId]);
 
+                    $pubObj = isset($batch['publications'][$subId]) ? $batch['publications'][$subId] : null;
+                    $primaryContactId = $pubObj && !empty($pubObj->primary_contact_id) ? (int) $pubObj->primary_contact_id : 0;
+
                     $authorList = isset($batch['authors'][$subId]) ? $batch['authors'][$subId] : [];
                     $authorNamesArr = [];
                     $correspondentEmail = '';
-                    foreach ($authorList as $aIdx => $aInfo) {
+                    $firstAuthorEmail = '';
+                    foreach ($authorList as $aInfo) {
                         if (!empty($aInfo['name'])) {
                             $authorNamesArr[] = $aInfo['name'];
                         }
-                        if ($aIdx === 0 && !empty($aInfo['email'])) {
+                        if ($firstAuthorEmail === '' && !empty($aInfo['email'])) {
+                            $firstAuthorEmail = $aInfo['email'];
+                        }
+                        if ($primaryContactId > 0 && isset($aInfo['authorId']) && (int) $aInfo['authorId'] === $primaryContactId && !empty($aInfo['email'])) {
                             $correspondentEmail = $aInfo['email'];
                         }
+                    }
+                    if ($correspondentEmail === '') {
+                        $correspondentEmail = $firstAuthorEmail;
                     }
                     $authorNamesStr = !empty($authorNamesArr) ? implode(', ', $authorNamesArr) : '-';
 
@@ -213,13 +228,18 @@ class SynchronizationService
                     $copyeditingDone = $stageId >= 5 || $isPublished ? 1 : 0;
                     $isReadyToPublish = $isAccepted && !$isPublished && $hasLoa && $copyeditingDone ? 1 : 0;
 
-                    $pubObj = isset($batch['publications'][$subId]) ? $batch['publications'][$subId] : null;
                     $datePublished = $pubObj && !empty($pubObj->date_published) ? substr((string) $pubObj->date_published, 0, 10) : ($isPublished && !empty($subRow->last_modified) ? substr((string) $subRow->last_modified, 0, 10) : null);
 
                     $doi = isset($batch['dois'][$subId]) ? $batch['dois'][$subId] : null;
                     $publicationUrl = null;
-                    if ($isPublished && $baseUrl !== '') {
-                        $publicationUrl = rtrim($baseUrl, '/') . '/index.php/' . $jInfo['path'] . '/article/view/' . $subId;
+                    if ($isPublished) {
+                        $bestArticleId = $pubObj && !empty($pubObj->url_path) ? (string) $pubObj->url_path : (string) $subId;
+                        if ($dispatcher && $request) {
+                            $publicationUrl = $dispatcher->url($request, ROUTE_PAGE, $jInfo['path'], 'article', 'view', [$bestArticleId]);
+                        } elseif ($baseUrl !== '') {
+                            $indexPrefix = $restfulUrls ? '' : '/index.php';
+                            $publicationUrl = rtrim($baseUrl, '/') . $indexPrefix . '/' . $jInfo['path'] . '/article/view/' . rawurlencode($bestArticleId);
+                        }
                     }
 
                     $this->_dao->upsertArticleData([
@@ -269,14 +289,9 @@ class SynchronizationService
                     $currentSubIds[] = (int) $sr->submission_id;
                 }
                 if (!empty($currentSubIds)) {
-                    Capsule::table('mjcp_article_data')
-                        ->where('context_id', '=', $ctxId)
-                        ->whereNotIn('submission_id', $currentSubIds)
-                        ->delete();
+                    Capsule::table('mjcp_article_data')->where('context_id', '=', $ctxId)->whereNotIn('submission_id', $currentSubIds)->delete();
                 } else {
-                    Capsule::table('mjcp_article_data')
-                        ->where('context_id', '=', $ctxId)
-                        ->delete();
+                    Capsule::table('mjcp_article_data')->where('context_id', '=', $ctxId)->delete();
                 }
 
                 $this->_dao->logSync($ctxId, 'connected', $mode, $jProcessed, $jActive, null, $triggeredByUserId, $jStartedAt);
@@ -359,7 +374,7 @@ class SynchronizationService
     protected function _analyzeDecisions($decisions, $status, $stageId)
     {
         $isAccepted = false;
-        $isDeclined = $status === 4;
+        $isDeclined = false;
         $dateAccepted = null;
 
         foreach ($decisions as $d) {
@@ -371,10 +386,18 @@ class SynchronizationService
                     $dateAccepted = substr((string) $d->date_decided, 0, 10);
                 }
             } elseif ($code === 4 || $code === 9) {
-                if (!$isAccepted) {
-                    $isDeclined = true;
-                }
+                $isDeclined = true;
+            } elseif ($code === 17) {
+                // SUBMISSION_EDITOR_DECISION_REVERT_DECLINE restores submission to active workflow
+                $isDeclined = false;
             }
+        }
+
+        if ($status === 4) {
+            $isDeclined = true;
+        } elseif ($status === 1) {
+            // Active queued submission must not remain marked declined if decline was reverted
+            $isDeclined = false;
         }
 
         if ($stageId >= 4 || $status === 3 || $status === 5) {
@@ -416,10 +439,15 @@ class SynchronizationService
 
         if ($bucket === 'review' || $bucket === 'revision') {
             if ($currentRound <= 1) {
+                $r1Date = null;
                 foreach ($decisions as $d) {
-                    if (in_array((int) $d->decision, [8, 3], true) && !empty($d->date_decided)) {
-                        return substr((string) $d->date_decided, 0, 10);
+                    // SUBMISSION_EDITOR_DECISION_EXTERNAL_REVIEW (8) starts Review Round 1
+                    if ((int) $d->decision === 8 && !empty($d->date_decided)) {
+                        $r1Date = substr((string) $d->date_decided, 0, 10);
                     }
+                }
+                if ($r1Date) {
+                    return $r1Date;
                 }
             } else {
                 $newRoundDate = null;

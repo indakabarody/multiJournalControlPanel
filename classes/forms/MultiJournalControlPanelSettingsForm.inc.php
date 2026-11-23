@@ -133,11 +133,25 @@ class MultiJournalControlPanelSettingsForm extends Form
         $maxUploadSizeMb = max(1, min(10, (int) $this->getData('maxUploadSizeMb')));
         $loaValidationUrl = trim((string) $this->getData('loaValidationUrl'));
 
+        $oldThresholds = $this->dao->getStageThresholds(0);
+        $oldValues = [
+            'publishingHouseName' => (string) $this->plugin->getSetting(0, 'publishingHouseName'),
+            'round1Limit' => $oldThresholds['round1Limit'],
+            'round2Limit' => $oldThresholds['round2Limit'],
+            'copyeditingWarning' => $oldThresholds['copyeditingWarning'],
+            'paymentAccessUsernames' => implode(', ', $this->dao->getPaymentAccessUsernames()),
+            'tokenExpirationDays' => (int) $this->plugin->getSetting(0, 'tokenExpirationDays'),
+            'maxUploadSizeMb' => (int) $this->plugin->getSetting(0, 'maxUploadSizeMb'),
+            'loaValidationUrl' => (string) $this->plugin->getSetting(0, 'loaValidationUrl'),
+        ];
+
         $this->plugin->updateSetting(0, 'publishingHouseName', $houseName, 'string');
         $this->plugin->updateSetting(0, 'tokenExpirationDays', $tokenExpirationDays, 'int');
         $this->plugin->updateSetting(0, 'maxUploadSizeMb', $maxUploadSizeMb, 'int');
         $this->plugin->updateSetting(0, 'maxUploadSizeBytes', $maxUploadSizeMb * 1048576, 'int');
-        $this->plugin->updateSetting(0, 'loaValidationUrl', $loaValidationUrl, 'string');
+        if ($request && $request->getUserVar('loaValidationUrl') !== null) {
+            $this->plugin->updateSetting(0, 'loaValidationUrl', $loaValidationUrl, 'string');
+        }
 
         $this->dao->saveStageThresholds(
             0,
@@ -151,7 +165,7 @@ class MultiJournalControlPanelSettingsForm extends Form
 
         $this->dao->setPaymentAccessUsernames($paymentAccessUsernames, $userId);
 
-        $this->dao->logAudit(0, null, $userId, $username, 'plugin_settings_updated', 'plugin_settings', null, [
+        $this->dao->logAudit(0, null, $userId, $username, 'plugin_settings_updated', 'plugin_settings', $oldValues, [
             'publishingHouseName' => $houseName,
             'round1Limit' => $round1Limit,
             'round2Limit' => $round2Limit,
@@ -159,6 +173,7 @@ class MultiJournalControlPanelSettingsForm extends Form
             'paymentAccessUsernames' => $paymentAccessUsernames,
             'tokenExpirationDays' => $tokenExpirationDays,
             'maxUploadSizeMb' => $maxUploadSizeMb,
+            'loaValidationUrl' => $request && $request->getUserVar('loaValidationUrl') !== null ? $loaValidationUrl : $oldValues['loaValidationUrl'],
         ]);
 
         import('classes.notification.NotificationManager');

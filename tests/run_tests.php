@@ -261,6 +261,8 @@ Capsule::schema()->create('submissions', function (Blueprint $table) {
 Capsule::schema()->create('publications', function (Blueprint $table) {
 	$table->bigInteger('publication_id')->autoIncrement();
 	$table->bigInteger('submission_id');
+	$table->bigInteger('primary_contact_id')->nullable();
+	$table->string('url_path', 64)->nullable();
 	$table->date('date_published')->nullable();
 	$table->tinyInteger('status')->default(1);
 });
@@ -865,7 +867,7 @@ foreach ($iter as $file) {
 		continue;
 	}
 	$content = file_get_contents($path);
-	if (stripos($content, 'mpcp') !== false) {
+	if (stripos($content, 'rjcp') !== false) {
 		$legacyPrefixMatches[] = str_replace($pluginDir . '/', '', $path);
 	}
 }
@@ -873,6 +875,314 @@ foreach ($iter as $file) {
 assertTest(
 	empty($legacyPrefixMatches),
 	"16. Prefix standardization test (0 occurrences of legacy prefix across all plugin files)"
+);
+
+// -------------------------------------------------------------------------
+// TEST 17: Site-Wide Plugin Flag & Strict RBAC Segregation
+// -------------------------------------------------------------------------
+$isSitePluginVal = $plugin->isSitePlugin();
+Validation::$isSiteAdminFlag = true;
+$permsPureSiteAdmin = $dashboardService->resolveUserPermissions(new MockUser(99, 'pure_site_admin'), 0);
+Validation::$isSiteAdminFlag = false;
+$permsStrictDirector = $dashboardService->resolveUserPermissions(new MockUser(10, 'director_user'), 0);
+
+assertTest(
+	$isSitePluginVal === true &&
+	$permsPureSiteAdmin['canManageSettings'] === true &&
+	$permsPureSiteAdmin['canViewDashboard'] === true &&
+	$permsPureSiteAdmin['canManageLoa'] === false &&
+	$permsStrictDirector['isStrictDirector'] === true &&
+	$permsStrictDirector['canViewPayment'] === false &&
+	$permsStrictDirector['canManageTestimonials'] === false &&
+	$permsStrictDirector['canTriggerSync'] === false,
+	"17. Site-wide plugin & strict RBAC test (isSitePlugin=true, Site Admin does not auto-inherit canManageLoa, Director restricted from payments/sync/testimonials)"
+);
+
+// -------------------------------------------------------------------------
+// TEST 18: Scheduled Task Frequency
+// -------------------------------------------------------------------------
+$scheduledXml = file_get_contents($pluginDir . '/scheduledTasks.xml');
+assertTest(
+	strpos($scheduledXml, 'hour="*/2"') !== false,
+	"18. Scheduled task frequency test (scheduledTasks.xml uses hour=\"*/2\" for 2-hour sync interval)"
+);
+
+// -------------------------------------------------------------------------
+// TEST 19: Declined Pipeline Accounting, Revert Decline, & Sorting
+// -------------------------------------------------------------------------
+Capsule::table('submissions')->insert([
+	['submission_id' => 2130, 'context_id' => 1, 'current_publication_id' => 2130, 'date_submitted' => $sixteenDaysAgo, 'stage_id' => 3, 'status' => 4, 'submission_progress' => 0],
+	['submission_id' => 2140, 'context_id' => 1, 'current_publication_id' => 2140, 'date_submitted' => $sixteenDaysAgo, 'stage_id' => 3, 'status' => 1, 'submission_progress' => 0],
+]);
+Capsule::table('publications')->insert([
+	['publication_id' => 2130, 'submission_id' => 2130, 'primary_contact_id' => null, 'url_path' => null, 'status' => 4, 'date_published' => null],
+	['publication_id' => 2140, 'submission_id' => 2140, 'primary_contact_id' => 202, 'url_path' => 'custom-slug-2140', 'status' => 1, 'date_published' => null],
+]);
+Capsule::table('publication_settings')->insert([
+	['publication_id' => 2130, 'locale' => 'en_US', 'setting_name' => 'title', 'setting_value' => 'Declined Economic Study'],
+	['publication_id' => 2140, 'locale' => 'en_US', 'setting_name' => 'prefix', 'setting_value' => 'The'],
+	['publication_id' => 2140, 'locale' => 'en_US', 'setting_name' => 'title', 'setting_value' => 'Policy Reform'],
+	['publication_id' => 2140, 'locale' => 'en_US', 'setting_name' => 'subtitle', 'setting_value' => 'A Case Study'],
+	['publication_id' => 2110, 'locale' => '', 'setting_name' => 'issueId', 'setting_value' => '101'],
+]);
+Capsule::table('authors')->insert([
+	['author_id' => 201, 'publication_id' => 2140, 'email' => 'first@example.edu', 'seq' => 1],
+	['author_id' => 202, 'publication_id' => 2140, 'email' => 'primary@example.edu', 'seq' => 2],
+]);
+Capsule::table('author_settings')->insert([
+	['author_id' => 201, 'locale' => 'en_US', 'setting_name' => 'givenName', 'setting_value' => 'First'],
+	['author_id' => 201, 'locale' => 'en_US', 'setting_name' => 'familyName', 'setting_value' => 'Author'],
+	['author_id' => 202, 'locale' => 'en_US', 'setting_name' => 'givenName', 'setting_value' => 'Primary'],
+	['author_id' => 202, 'locale' => 'en_US', 'setting_name' => 'familyName', 'setting_value' => 'Contact'],
+]);
+Capsule::table('edit_decisions')->insert([
+	['submission_id' => 2130, 'review_round_id' => 0, 'stage_id' => 3, 'round' => 1, 'editor_id' => 1, 'decision' => 4, 'date_decided' => $fiveDaysAgo],
+	['submission_id' => 2140, 'review_round_id' => 0, 'stage_id' => 3, 'round' => 1, 'editor_id' => 1, 'decision' => 4, 'date_decided' => $sixteenDaysAgo],
+	['submission_id' => 2140, 'review_round_id' => 0, 'stage_id' => 3, 'round' => 1, 'editor_id' => 1, 'decision' => 17, 'date_decided' => $fiveDaysAgo],
+]);
+
+$syncService->synchronizeJournals(null, 'manual', 1, 'en_US');
+
+$art2130 = Capsule::table('mjcp_article_data')->where('submission_id', '=', 2130)->first();
+$art2140 = Capsule::table('mjcp_article_data')->where('submission_id', '=', 2140)->first();
+$pipelineDesc = $dashboardService->getSubmissionPipeline(['contextId' => 'all', 'period' => 'all', 'sort' => 'name_desc'], 'en_US');
+$pipelineAllDesc = $dashboardService->getSubmissionPipeline(['contextId' => 'all', 'period' => 'all', 'sort' => 'all_desc'], 'en_US');
+
+$commRow2 = null;
+foreach ($pipelineAllDesc as $pr) {
+	if ($pr['journalPath'] === 'commercium') {
+		$commRow2 = $pr;
+	}
+}
+$commSum7 = $commRow2
+	? ($commRow2['submission'] + $commRow2['review'] + $commRow2['revision'] + $commRow2['copyediting'] + $commRow2['production'] + $commRow2['published'] + $commRow2['declined'])
+	: -1;
+
+assertTest(
+	(int) $art2130->is_declined === 1 &&
+	(int) $art2140->is_declined === 0 &&
+	$commRow2 !== null &&
+	$commRow2['declined'] === 1 &&
+	$commRow2['allArticle'] === $commSum7 &&
+	$pipelineDesc[0]['journalPath'] === 'politeia' &&
+	$pipelineAllDesc[0]['journalPath'] === 'commercium',
+	"19. Declined accounting, revert-decline handling, & pipeline sorting test (All Article = sum of all 7 buckets, decision 17 clears decline)"
+);
+
+// -------------------------------------------------------------------------
+// TEST 20: Payment Recap per Issue, Author Proof History Trail, Duplicate LOA Guard, & Unknown Usernames
+// -------------------------------------------------------------------------
+$payDashData = $paymentService->getPaymentsDashboardData(['contextId' => 'all', 'period' => 'all'], 'en_US');
+$tokenRes2140 = $paymentService->generateAuthorToken(2140, 30, 12);
+$rawToken2140 = $tokenRes2140['token'];
+
+$proofImg1 = $tmpDir . '/mjcp_proof_v1.png';
+$proofImg2 = $tmpDir . '/mjcp_proof_v2.png';
+$miniPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+file_put_contents($proofImg1, $miniPng);
+file_put_contents($proofImg2, $miniPng);
+
+$sub1 = $paymentService->submitAuthorConfirmationForm($rawToken2140, [
+	'fullNameAuthors' => 'Primary Contact',
+	'affiliation' => 'Institute A',
+	'correspondentEmail' => 'primary@example.edu',
+	'whatsappNumber' => '+628111111111',
+	'testimonial' => 'Great review process.',
+	'testimonialConsent' => 1,
+	'locale' => 'en_US',
+], [
+	'name' => 'proof_v1.png',
+	'tmp_name' => $proofImg1,
+	'size' => filesize($proofImg1),
+	'error' => UPLOAD_ERR_OK,
+	'_allowTestLocalFile' => true,
+], '127.0.0.1');
+
+$sub2 = $paymentService->submitAuthorConfirmationForm($rawToken2140, [
+	'fullNameAuthors' => 'Primary Contact Updated',
+	'affiliation' => 'Institute B',
+	'correspondentEmail' => 'primary@example.edu',
+	'whatsappNumber' => '+628111111111',
+	'testimonial' => 'Great review process updated.',
+	'testimonialConsent' => 1,
+	'locale' => 'en_US',
+], [
+	'name' => 'proof_v2.png',
+	'tmp_name' => $proofImg2,
+	'size' => filesize($proofImg2),
+	'error' => UPLOAD_ERR_OK,
+	'_allowTestLocalFile' => true,
+], '127.0.0.1');
+@unlink($proofImg1);
+@unlink($proofImg2);
+
+$proofLogs2140 = Capsule::table('mjcp_payment_logs')->where('submission_id', '=', 2140)->orderBy('payment_log_id', 'asc')->get();
+$hasOldAndNewProof = false;
+foreach ($proofLogs2140 as $plog) {
+	if (!empty($plog->old_proof_file_path) && !empty($plog->new_proof_file_path) && $plog->old_proof_file_path !== $plog->new_proof_file_path) {
+		$hasOldAndNewProof = true;
+	}
+}
+$formUpdateAudit = Capsule::table('mjcp_audit_logs')
+	->where('submission_id', '=', 2140)
+	->where('action', '=', 'author_confirmation_updated')
+	->orderBy('audit_id', 'desc')
+	->first();
+
+// Duplicate LOA number guard across different submissions
+$dupPdf = $tmpDir . '/mjcp_dup_loa.pdf';
+file_put_contents($dupPdf, "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF");
+$dupLoaRes = $paymentService->uploadLoa(2090, 'LOA/MED/2026/2038', [
+	'name' => 'LOA-2090.pdf',
+	'tmp_name' => $dupPdf,
+	'size' => filesize($dupPdf),
+	'error' => UPLOAD_ERR_OK,
+	'_allowTestLocalFile' => true,
+], new MockUser(12, 'jm_registered'));
+@unlink($dupPdf);
+
+// Unknown usernames warning return
+Capsule::table('users')->insert([
+	['user_id' => 12, 'username' => 'jm_registered', 'email' => 'jm@example.edu'],
+	['user_id' => 13, 'username' => 'finance_user', 'email' => 'fin@example.edu'],
+]);
+$unknownUsers = $dao->setPaymentAccessUsernames('jm_registered, finance_user, nonexistent_user_xyz', 1);
+
+assertTest(
+	isset($payDashData['recapByIssue']) &&
+	is_array($payDashData['recapByIssue']) &&
+	count($payDashData['recapByIssue']) >= 1 &&
+	$sub1['ok'] === true &&
+	$sub2['ok'] === true &&
+	$hasOldAndNewProof === true &&
+	$formUpdateAudit !== null && !empty($formUpdateAudit->old_value) &&
+	$dupLoaRes['ok'] === false &&
+	in_array('nonexistent_user_xyz', $unknownUsers, true),
+	"20. Payment recap per issue, author proof replacement history trail, form update audit snapshot, duplicate LOA rejection, & unknown username check"
+);
+
+// -------------------------------------------------------------------------
+// TEST 21: Editorial Reminder Integration, Issue Health Timeliness/Articles/Quota Override, & Per-Stage/Comparison KPIs
+// -------------------------------------------------------------------------
+Capsule::table('plugin_settings')->insert([
+	['plugin_name' => 'editorialreminderdashboardplugin', 'context_id' => 0, 'setting_name' => 'round1Limit', 'setting_value' => '18', 'setting_type' => 'int'],
+	['plugin_name' => 'editorialreminderdashboardplugin', 'context_id' => 0, 'setting_name' => 'round2Limit', 'setting_value' => '6', 'setting_type' => 'int'],
+	['plugin_name' => 'editorialreminderdashboardplugin', 'context_id' => 0, 'setting_name' => 'copyeditingWarning', 'setting_value' => '9', 'setting_type' => 'int'],
+]);
+$erThresholds = $dao->getStageThresholds(0);
+Capsule::table('plugin_settings')->where('plugin_name', '=', 'editorialreminderdashboardplugin')->delete();
+
+// Issue-specific quota override (issue_id=101 quota=3 vs journal default=2)
+$dao->saveIssueQuota(1, 101, 3, '2026-12-31', 1);
+$issueCards = $dashboardService->getIssueHealthList(['contextId' => 'all'], 'en_US');
+$card101 = null;
+foreach ($issueCards as $ic) {
+	if ((int) $ic['issueId'] === 101) {
+		$card101 = $ic;
+	}
+}
+
+$perfData = $dashboardService->getJournalPerformance(['contextId' => 'all', 'period' => 'all'], 'en_US');
+
+assertTest(
+	$erThresholds['round1Limit'] === 18 &&
+	$erThresholds['round2Limit'] === 6 &&
+	$erThresholds['copyeditingWarning'] === 9 &&
+	$card101 !== null &&
+	$card101['quota'] === 3 &&
+	!empty($card101['timelinessStatus']) &&
+	!empty($card101['timelinessLabel']) &&
+	count($card101['articles']) >= 1 &&
+	isset($perfData['stageOnTimeStats']) && count($perfData['stageOnTimeStats']) === 3 &&
+	isset($perfData['journalComparison']) && count($perfData['journalComparison']) >= 3,
+	"21. Editorial Reminder threshold sync, Issue Health quota override + timeliness + per-article status, & Performance per-stage + comparison KPIs"
+);
+
+// -------------------------------------------------------------------------
+// TEST 22: OJS 3.3 Metadata Fidelity & Sync Log Scalability
+// -------------------------------------------------------------------------
+Capsule::table('publications')->where('publication_id', '=', 2120)->update(['url_path' => 'custom-slug-2120']);
+$syncService->synchronizeJournals(2, 'manual', 1, 'en_US');
+$art2120Updated = Capsule::table('mjcp_article_data')->where('submission_id', '=', 2120)->first();
+
+$syncLogBatch = [];
+for ($i = 0; $i < 310; $i++) {
+	$syncLogBatch[] = [
+		'context_id' => 1,
+		'sync_mode' => 'scheduled',
+		'sync_status' => 'connected',
+		'articles_processed' => 1,
+		'started_at' => '2026-01-01 00:00:00',
+		'finished_at' => '2026-01-01 00:01:00',
+	];
+}
+Capsule::table('mjcp_sync_logs')->insert($syncLogBatch);
+$latestSyncByJournal = $dao->getLatestSyncLogsByJournal();
+
+assertTest(
+	$art2140->article_title === 'The Policy Reform: A Case Study' &&
+	$art2140->correspondent_email === 'primary@example.edu' &&
+	strpos((string) $art2120Updated->publication_url, '/article/view/custom-slug-2120') !== false &&
+	isset($latestSyncByJournal[1]) &&
+	isset($latestSyncByJournal[2]) &&
+	isset($latestSyncByJournal[3]),
+	"22. OJS 3.3 metadata fidelity (prefix+title+subtitle, primary_contact_id email, url_path) & grouped latest sync logs (>300 rows)"
+);
+
+// -------------------------------------------------------------------------
+// TEST 23: CSV/XLSX Formula Injection Sanitization & Settings Modal/JS Safeguards
+// -------------------------------------------------------------------------
+$exportService = new ExportService($plugin);
+$sanitizedEq = $exportService->sanitizeSpreadsheetCell("=CMD|'/C calc'!A0");
+$sanitizedPlus = $exportService->sanitizeSpreadsheetCell('+SUM(1,2)');
+$sanitizedNormal = $exportService->sanitizeSpreadsheetCell('1500000');
+$modalTplContent = file_get_contents($pluginDir . '/templates/settings/modal.tpl');
+$jsContent = file_get_contents($pluginDir . '/js/multiJournalControlPanel.js');
+
+assertTest(
+	$sanitizedEq === "'=CMD|'/C calc'!A0" &&
+	$sanitizedPlus === "'+SUM(1,2)" &&
+	$sanitizedNormal === '1500000' &&
+	strpos($modalTplContent, 'loaValidationUrl') !== false &&
+	strpos($jsContent, 'bindSettingsModalAjaxForm') !== false &&
+	strpos($jsContent, 'confirmRegenerateText') !== false &&
+	strpos($jsContent, 'selectOneText') !== false,
+	"23. Spreadsheet formula injection sanitization, settings modal loaValidationUrl & AjaxFormHandler binding, and author link confirmation safeguards"
+);
+
+// -------------------------------------------------------------------------
+// TEST 24: Complete 4-File Locale Parity & PHP/Smarty Key Coverage
+// -------------------------------------------------------------------------
+$xmlEnObj = simplexml_load_file($pluginDir . '/locale/en_US/locale.xml');
+$xmlIdObj = simplexml_load_file($pluginDir . '/locale/id_ID/locale.xml');
+$xmlEnKeys = [];
+foreach ($xmlEnObj->message as $msgNode) {
+	$xmlEnKeys[] = (string) $msgNode['key'];
+}
+$xmlIdKeys = [];
+foreach ($xmlIdObj->message as $msgNode) {
+	$xmlIdKeys[] = (string) $msgNode['key'];
+}
+$poXmlEnDiff = array_merge(array_diff($enKeys, $xmlEnKeys), array_diff($xmlEnKeys, $enKeys));
+$poXmlIdDiff = array_merge(array_diff($idKeys, $xmlIdKeys), array_diff($xmlIdKeys, $idKeys));
+
+$missingPhpKeys = [];
+foreach ($phpFiles as $pf) {
+	$c = file_get_contents($pf);
+	preg_match_all("/__\(\s*['\"]((?:mjcp|plugins\.generic\.multiJournalControlPanel)\.[a-zA-Z0-9_.-]+)['\"]/", $c, $pm);
+	foreach ($pm[1] as $pKey) {
+		if (substr($pKey, -1) === '.') {
+			continue;
+		}
+		if (!isset($GLOBALS['mjcpTestTranslations']['en_US'][$pKey]) || !isset($GLOBALS['mjcpTestTranslations']['id_ID'][$pKey])) {
+			$missingPhpKeys[] = $pKey;
+		}
+	}
+}
+
+assertTest(
+	empty($poXmlEnDiff) && empty($poXmlIdDiff) && empty($missingPhpKeys),
+	"24. 4-file locale parity (.po & .xml for en_US & id_ID) and 0 missing PHP/Smarty locale keys"
 );
 
 // Clean up temporary test files directory

@@ -66,7 +66,7 @@ All plugin data is isolated in `mjcp_*` tables (no OJS core tables are modified)
 
 ## Scheduled Synchronization
 
-The plugin registers `scheduledTasks.xml` with OJS `AcronPlugin` automatically (`SynchronizationTask`, running hourly). If your server uses system cron instead of Acron, ensure OJS scheduled tasks are running:
+The plugin registers `scheduledTasks.xml` with OJS `AcronPlugin` automatically (`SynchronizationTask`, running every 2 hours via `hour="*/2"`). If your server uses system cron instead of Acron, ensure OJS scheduled tasks are running:
 
 ```bash
 0 * * * * php /path/to/ojs/tools/runScheduledTasks.php /path/to/ojs/plugins/generic/multiJournalControlPanel/scheduledTasks.xml

@@ -33,6 +33,9 @@
 		{fbvFormSection title="mjcp.settings.maxUploadSizeLabel" for="maxUploadSizeMb"}
 			{fbvElement type="text" id="maxUploadSizeMb" value=$maxUploadSizeMb}
 		{/fbvFormSection}
+		{fbvFormSection title="mjcp.settings.loaValidationUrlLabel" for="loaValidationUrl"}
+			{fbvElement type="text" id="loaValidationUrl" value=$loaValidationUrl}
+		{/fbvFormSection}
 	{/fbvFormArea}
 	{fbvFormButtons submitText="common.save"}
 </form>

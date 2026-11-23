@@ -81,6 +81,7 @@ class MultiJournalControlPanelHandler extends Handler
         $perms = $dashboardService->resolveUserPermissions($user, $ctxId);
 
         if (!$perms['canViewDashboard'] && !$perms['canViewPayment']) {
+            $this->_logUnauthorizedAttempt($request, 'panel_' . ($op !== '' ? $op : 'index'));
             return false;
         }
 
@@ -158,7 +159,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function drilldown($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false);
+        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false, 'view_drilldown_attempt');
         if (!$perms) {
             return;
         }
@@ -187,7 +188,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function bottlenecks($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false);
+        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false, 'view_bottlenecks_attempt');
         if (!$perms) {
             return;
         }
@@ -217,7 +218,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function journals($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canViewConnectedJournals', false);
+        $perms = $this->_requireInternalPermission($request, 'canViewConnectedJournals', false, 'view_journals_attempt');
         if (!$perms) {
             return;
         }
@@ -247,7 +248,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function issues($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false);
+        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false, 'view_issues_attempt');
         if (!$perms) {
             return;
         }
@@ -277,7 +278,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function performance($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false);
+        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false, 'view_performance_attempt');
         if (!$perms) {
             return;
         }
@@ -309,7 +310,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function payments($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canViewPayment', false);
+        $perms = $this->_requireInternalPermission($request, 'canViewPayment', false, 'view_payments_attempt');
         if (!$perms) {
             return;
         }
@@ -323,6 +324,13 @@ class MultiJournalControlPanelHandler extends Handler
         $filters['quickFilter'] = $qf !== '' ? $qf : 'all';
 
         $paymentData = $paymentService->getPaymentsDashboardData($filters, $locale);
+        $dispatcher = $request->getDispatcher();
+        $contextPath = $request->getContext() ? $request->getContext()->getPath() : 'index';
+        foreach ($paymentData['items'] as &$pItem) {
+            $pItem['downloadProofUrl'] = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadProof', [$pItem['submissionId']]);
+            $pItem['detailUrl'] = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'paymentDetail', [$pItem['submissionId']]);
+        }
+        unset($pItem);
 
         $this->_assignCommonPanelVars($request, $perms, 'payments', $filters, $locale);
         $templateMgr = TemplateManager::getManager($request);
@@ -330,6 +338,7 @@ class MultiJournalControlPanelHandler extends Handler
             'paymentSummary' => $paymentData['summary'],
             'paymentItems' => $paymentData['items'],
             'paymentRecapByJournal' => $paymentData['recapByJournal'],
+            'paymentRecapByIssue' => $paymentData['recapByIssue'],
             'activeQuickFilter' => $filters['quickFilter'],
         ]);
 
@@ -372,6 +381,20 @@ class MultiJournalControlPanelHandler extends Handler
             $request->redirect(null, 'multiJournalControlPanel', $perms['canViewPayment'] ? 'payments' : 'authorLinks');
             return;
         }
+
+        $dispatcher = $request->getDispatcher();
+        $contextPath = $request->getContext() ? $request->getContext()->getPath() : 'index';
+        $detail['downloadProofUrl'] = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadProof', [$submissionId]);
+        $detail['downloadLoaUrl'] = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadLoa', [$submissionId]);
+        foreach ($detail['paymentLogs'] as &$plog) {
+            $plog['oldProofDownloadUrl'] = $plog['hasOldProof']
+                ? $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadHistoricalProof', [$plog['id'], 'old'])
+                : '';
+            $plog['newProofDownloadUrl'] = $plog['hasNewProof']
+                ? $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadHistoricalProof', [$plog['id'], 'new'])
+                : '';
+        }
+        unset($plog);
 
         $filters = $this->_readCommonFilters($request);
         $this->_assignCommonPanelVars($request, $perms, 'payments', $filters, $locale);
@@ -630,6 +653,47 @@ class MultiJournalControlPanelHandler extends Handler
     }
 
     /**
+     * Access-controlled download handler for historical payment proof files preserved in `mjcp_payment_logs`.
+     * Only accessible to registered payment users (`canViewPayment`).
+     *
+     * @param array $args [$paymentLogId, $which ('old'|'new')]
+     * @param PKPRequest $request
+     * @return void
+     */
+    public function downloadHistoricalProof($args, $request)
+    {
+        $perms = $this->_requireInternalPermission($request, 'canViewPayment', false, 'download_historical_proof_attempt');
+        if (!$perms) {
+            return;
+        }
+
+        $logId = !empty($args[0]) ? (int) $args[0] : (int) $request->getUserVar('logId');
+        $which = !empty($args[1]) ? strtolower((string) $args[1]) : strtolower((string) $request->getUserVar('which'));
+
+        $dao = new MultiJournalControlPanelDAO();
+        $logRow = $dao->getPaymentLogById($logId);
+        if (!$logRow) {
+            $this->_renderAccessDenied($request, 'mjcp.upload.error.fileNotFound');
+            return;
+        }
+
+        $filePath = $which === 'old' ? (string) $logRow->old_proof_file_path : (string) $logRow->new_proof_file_path;
+        $paymentService = new PaymentService(self::getPlugin(), $dao);
+        $allowedBase = realpath($paymentService->getPrivateStorageDir('proofs'));
+        $resolvedFile = $filePath !== '' ? realpath($filePath) : false;
+
+        if (!$allowedBase || !$resolvedFile || strpos($resolvedFile, $allowedBase . DIRECTORY_SEPARATOR) !== 0 || !is_readable($resolvedFile)) {
+            $this->_renderAccessDenied($request, 'mjcp.upload.error.fileNotFound');
+            return;
+        }
+
+        import('lib.pkp.classes.file.FileManager');
+        $fileMgr = new FileManager();
+        $fileMgr->downloadByPath($resolvedFile, null, false, basename($resolvedFile));
+        exit();
+    }
+
+    /**
      * 8. Author Form Links ("authorLinks") - Generate, copy, export, and revoke unique author links.
      *
      * @param array $args
@@ -638,7 +702,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function authorLinks($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canManageAuthorLinks', false);
+        $perms = $this->_requireInternalPermission($request, 'canManageAuthorLinks', false, 'view_author_links_attempt');
         if (!$perms) {
             return;
         }
@@ -677,7 +741,7 @@ class MultiJournalControlPanelHandler extends Handler
             return;
         }
 
-        $perms = $this->_requireInternalPermission($request, 'canManageAuthorLinks', false);
+        $perms = $this->_requireInternalPermission($request, 'canManageAuthorLinks', false, 'generate_token_attempt');
         if (!$perms) {
             return;
         }
@@ -741,7 +805,7 @@ class MultiJournalControlPanelHandler extends Handler
             return;
         }
 
-        $perms = $this->_requireInternalPermission($request, 'canManageAuthorLinks', false);
+        $perms = $this->_requireInternalPermission($request, 'canManageAuthorLinks', false, 'revoke_token_attempt');
         if (!$perms) {
             return;
         }
@@ -770,7 +834,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function testimonials($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false);
+        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false, 'view_testimonials_attempt');
         if (!$perms) {
             return;
         }
@@ -806,7 +870,7 @@ class MultiJournalControlPanelHandler extends Handler
             return;
         }
 
-        $perms = $this->_requireInternalPermission($request, 'canViewDashboard', false);
+        $perms = $this->_requireInternalPermission($request, 'canManageTestimonials', false, 'toggle_testimonial_consent_attempt');
         if (!$perms) {
             return;
         }
@@ -836,7 +900,7 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function settings($args, $request)
     {
-        $perms = $this->_requireInternalPermission($request, 'canManageSettings', false);
+        $perms = $this->_requireInternalPermission($request, 'canManageSettings', false, 'view_settings_attempt');
         if (!$perms) {
             return;
         }
@@ -978,6 +1042,18 @@ class MultiJournalControlPanelHandler extends Handler
         $userId = (int) $user->getId();
         $username = (string) $user->getUsername();
 
+        $oldThresholds = $dao->getStageThresholds(0);
+        $oldSettings = [
+            'round1Limit' => $oldThresholds['round1Limit'],
+            'round2Limit' => $oldThresholds['round2Limit'],
+            'copyeditingWarning' => $oldThresholds['copyeditingWarning'],
+            'workingDays' => (string) $plugin->getSetting(0, 'workingDays'),
+            'tokenExpirationDays' => (int) $plugin->getSetting(0, 'tokenExpirationDays'),
+            'maxUploadSizeMb' => (int) $plugin->getSetting(0, 'maxUploadSizeMb'),
+            'loaValidationUrl' => (string) $plugin->getSetting(0, 'loaValidationUrl'),
+            'paymentAccessUsernames' => implode(', ', $dao->getPaymentAccessUsernames()),
+        ];
+
         $round1Limit = max(14, min(21, (int) $request->getUserVar('round1Limit') ? (int) $request->getUserVar('round1Limit') : 21));
         $round2Limit = max(1, (int) $request->getUserVar('round2Limit') ? (int) $request->getUserVar('round2Limit') : 7);
         $copyeditingWarning = max(1, (int) $request->getUserVar('copyeditingWarning') ? (int) $request->getUserVar('copyeditingWarning') : 10);
@@ -992,21 +1068,23 @@ class MultiJournalControlPanelHandler extends Handler
             $userId
         );
 
+        $unknownUsernames = [];
         if ($request->getUserVar('paymentAccessUsernames') !== null) {
-            $dao->setPaymentAccessUsernames((string) $request->getUserVar('paymentAccessUsernames'), $userId);
+            $unknownUsernames = array_merge($unknownUsernames, $dao->setPaymentAccessUsernames((string) $request->getUserVar('paymentAccessUsernames'), $userId));
         }
         if ($request->getUserVar('directorUsernames') !== null) {
-            $dao->setRoleUsernames('director', (string) $request->getUserVar('directorUsernames'), $userId);
+            $unknownUsernames = array_merge($unknownUsernames, $dao->setRoleUsernames('director', (string) $request->getUserVar('directorUsernames'), $userId));
         }
         if ($request->getUserVar('jmUsernames') !== null) {
-            $dao->setRoleUsernames('journal_manager', (string) $request->getUserVar('jmUsernames'), $userId);
+            $unknownUsernames = array_merge($unknownUsernames, $dao->setRoleUsernames('journal_manager', (string) $request->getUserVar('jmUsernames'), $userId));
         }
         if ($request->getUserVar('financeUsernames') !== null) {
-            $dao->setRoleUsernames('finance_admin', (string) $request->getUserVar('financeUsernames'), $userId);
+            $unknownUsernames = array_merge($unknownUsernames, $dao->setRoleUsernames('finance_admin', (string) $request->getUserVar('financeUsernames'), $userId));
         }
         if ($request->getUserVar('technicalUsernames') !== null) {
-            $dao->setRoleUsernames('technical_admin', (string) $request->getUserVar('technicalUsernames'), $userId);
+            $unknownUsernames = array_merge($unknownUsernames, $dao->setRoleUsernames('technical_admin', (string) $request->getUserVar('technicalUsernames'), $userId));
         }
+        $unknownUsernames = array_values(array_unique($unknownUsernames));
 
         // Save per-journal quotas
         $quotasInput = $request->getUserVar('journalQuotas');
@@ -1022,6 +1100,10 @@ class MultiJournalControlPanelHandler extends Handler
         $houseName = trim((string) $request->getUserVar('publishingHouseName'));
         $enableLangId = (int) $request->getUserVar('enableLangId') === 1;
         $enableLangEn = (int) $request->getUserVar('enableLangEn') === 1;
+        if (!$enableLangId && !$enableLangEn) {
+            $enableLangId = true;
+            $enableLangEn = true;
+        }
 
         $workingDaysInput = $request->getUserVar('workingDays');
         $selectedWorkingDays = [];
@@ -1050,25 +1132,31 @@ class MultiJournalControlPanelHandler extends Handler
         $plugin->updateSetting(0, 'enableLangId', $enableLangId, 'bool');
         $plugin->updateSetting(0, 'enableLangEn', $enableLangEn, 'bool');
 
-        $dao->logAudit(0, null, $userId, $username, 'settings_saved', 'mjcp_stage_thresholds', null, [
+        $dao->logAudit(0, null, $userId, $username, 'settings_saved', 'mjcp_stage_thresholds', $oldSettings, [
             'round1Limit' => $round1Limit,
             'round2Limit' => $round2Limit,
             'copyeditingWarning' => $copyeditingWarning,
             'workingDays' => $workingDaysCsv,
             'tokenExpirationDays' => $tokenExpDays,
             'maxUploadSizeMb' => $maxUploadMb,
+            'loaValidationUrl' => $loaValidationUrl,
+            'paymentAccessUsernames' => (string) $request->getUserVar('paymentAccessUsernames'),
         ]);
 
         // Re-synchronize so updated thresholds and working days immediately take effect
         $syncService = new SynchronizationService($plugin, $dao);
         $syncService->synchronizeJournals(null, 'auto', $userId, $this->_resolveActiveLocale($request));
 
+        $savedMsg = !empty($unknownUsernames)
+            ? __('mjcp.settings.unknownUsernamesWarning', ['usernames' => implode(', ', $unknownUsernames)])
+            : __('common.changesSaved');
+
         if ($this->_isAjaxRequest($request)) {
-            $this->_sendJson(['ok' => true, 'message' => __('common.changesSaved')]);
+            $this->_sendJson(['ok' => true, 'message' => $savedMsg, 'unknownUsernames' => $unknownUsernames]);
             return;
         }
 
-        $this->_notifyUser($request, NOTIFICATION_TYPE_SUCCESS, __('common.changesSaved'));
+        $this->_notifyUser($request, !empty($unknownUsernames) ? NOTIFICATION_TYPE_WARNING : NOTIFICATION_TYPE_SUCCESS, $savedMsg);
         $contextPath = $request->getContext() ? $request->getContext()->getPath() : 'index';
         $request->redirect($contextPath, 'multiJournalControlPanel', 'settings');
     }
@@ -1087,7 +1175,7 @@ class MultiJournalControlPanelHandler extends Handler
             return;
         }
 
-        $perms = $this->_requireInternalPermission($request, 'canManageSettings', false);
+        $perms = $this->_requireInternalPermission($request, 'canManageSettings', false, 'add_holiday_attempt');
         if (!$perms) {
             return;
         }
@@ -1130,7 +1218,7 @@ class MultiJournalControlPanelHandler extends Handler
             return;
         }
 
-        $perms = $this->_requireInternalPermission($request, 'canManageSettings', false);
+        $perms = $this->_requireInternalPermission($request, 'canManageSettings', false, 'delete_holiday_attempt');
         if (!$perms) {
             return;
         }
@@ -1167,7 +1255,7 @@ class MultiJournalControlPanelHandler extends Handler
             return;
         }
 
-        $perms = $this->_requireInternalPermission($request, 'canViewConnectedJournals', false);
+        $perms = $this->_requireInternalPermission($request, 'canTriggerSync', false, 'trigger_sync_attempt');
         if (!$perms) {
             return;
         }
@@ -1229,13 +1317,45 @@ class MultiJournalControlPanelHandler extends Handler
 
         $houseName = $this->_resolveHouseName($request);
 
+        // Resolve human-readable journal name and active filter summary for export metadata
+        $journalsMap = $dashboardService->getDAO()->getAllJournals($locale);
+        $journalLabel = __('mjcp.common.allJournals', ['house' => $houseName]);
+        if ($filters['contextId'] !== 'all' && (int) $filters['contextId'] > 0 && isset($journalsMap[(int) $filters['contextId']])) {
+            $journalLabel = $journalsMap[(int) $filters['contextId']]['name'];
+        }
+        $periodKeyMap = [
+            'all' => 'mjcp.common.periodAll',
+            '30d' => 'mjcp.common.period30d',
+            '90d' => 'mjcp.common.period90d',
+            '180d' => 'mjcp.common.period180d',
+            '365d' => 'mjcp.common.period365d',
+        ];
+        $periodLabel = isset($periodKeyMap[$filters['period']]) ? __($periodKeyMap[$filters['period']]) : $filters['period'];
+        $activeSubFilter = '-';
+        if ($module === 'payments') {
+            $qfMap = [
+                'all' => 'mjcp.payment.filter.all',
+                'form_unfilled' => 'mjcp.payment.filter.formUnfilled',
+                'form_unverified' => 'mjcp.payment.filter.formUnverified',
+                'loa_unpaid' => 'mjcp.payment.filter.loaUnpaid',
+                'paid_not_copyediting' => 'mjcp.payment.filter.paidNotCopyediting',
+                'paid_unpublished' => 'mjcp.payment.filter.paidUnpublished',
+            ];
+            $activeSubFilter = isset($qfMap[$filters['quickFilter']]) ? __($qfMap[$filters['quickFilter']]) : $filters['quickFilter'];
+        } elseif ($module === 'links' && $filters['unfilledOnly']) {
+            $activeSubFilter = __('mjcp.payment.filter.formUnfilled');
+        }
+        $searchLabel = $filters['search'] !== '' ? $filters['search'] : '-';
+
         $metadata = [
             'reportTitle' => __('plugins.generic.multiJournalControlPanel.displayName') . ' (' . ucfirst($module) . ')',
             'siteTitle' => $houseName,
             'exportedAt' => date('Y-m-d H:i:s'),
-            'activeFiltersText' => __('mjcp.export.filterSummary', [
-                'journal' => $filters['contextId'],
-                'period' => $filters['period'],
+            'activeFiltersText' => __('mjcp.export.filterSummaryDetailed', [
+                'journal' => $journalLabel,
+                'period' => $periodLabel,
+                'filter' => $activeSubFilter,
+                'search' => $searchLabel,
             ]),
             'exportedBy' => $perms['username'],
         ];
@@ -1287,7 +1407,8 @@ class MultiJournalControlPanelHandler extends Handler
     public function confirm($args, $request)
     {
         $rawToken = !empty($args[0]) ? trim((string) $args[0]) : trim((string) $request->getUserVar('token'));
-        $locale = $this->_resolveActiveLocale($request);
+        $enabledLangs = $this->_getEnabledAuthorFormLocales();
+        $locale = $this->_resolveActiveLocale($request, $enabledLangs['allowed']);
 
         $plugin = self::getPlugin();
         $paymentService = new PaymentService($plugin);
@@ -1295,6 +1416,8 @@ class MultiJournalControlPanelHandler extends Handler
 
         $this->setupTemplate($request);
         $templateMgr = TemplateManager::getManager($request);
+        $this->_registerPublicLocaleTranslator($templateMgr, $locale);
+
         $dispatcher = $request->getDispatcher();
         $contextPath = $request->getContext() ? $request->getContext()->getPath() : 'index';
         $baseUrl = $request->getBaseUrl();
@@ -1307,6 +1430,14 @@ class MultiJournalControlPanelHandler extends Handler
 
         $customLoaValUrl = trim((string) $plugin->getSetting(0, 'loaValidationUrl'));
         $baseLoaValidationUrl = $customLoaValUrl !== '' ? $customLoaValUrl : $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'validateLoa');
+        $loaValSep = strpos($baseLoaValidationUrl, '?') !== false ? '&' : '?';
+        $loaValidationUrlFull = '';
+        if (!empty($resolved['detail']['loa']['loaNumber'])) {
+            $loaValidationUrlFull = $baseLoaValidationUrl . $loaValSep . 'loa=' . rawurlencode((string) $resolved['detail']['loa']['loaNumber']);
+        }
+
+        $confirmUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$rawToken]);
+        $confirmSep = strpos($confirmUrl, '?') !== false ? '&' : '?';
 
         $justSubmitted = (int) $request->getUserVar('submitted') === 1;
 
@@ -1315,16 +1446,21 @@ class MultiJournalControlPanelHandler extends Handler
             'pluginUrl' => $pluginUrl,
             'houseName' => $houseName,
             'activeLocale' => $locale,
+            'enableLangId' => $enabledLangs['enableLangId'],
+            'enableLangEn' => $enabledLangs['enableLangEn'],
             'rawToken' => $rawToken,
             'tokenValid' => !empty($resolved['isValid']),
             'tokenReason' => isset($resolved['reason']) ? $resolved['reason'] : 'invalid',
             'detail' => isset($resolved['detail']) ? $resolved['detail'] : null,
             'justSubmitted' => $justSubmitted,
             'formErrors' => [],
-            'confirmUrl' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$rawToken]),
+            'confirmUrl' => $confirmUrl,
+            'confirmUrlId' => $confirmUrl . $confirmSep . 'uiLocale=id_ID',
+            'confirmUrlEn' => $confirmUrl . $confirmSep . 'uiLocale=en_US',
             'submitConfirmationUrl' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'submitConfirmation', [$rawToken]),
             'downloadLoaUrl' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadLoa', [$rawToken]),
             'baseLoaValidationUrl' => $baseLoaValidationUrl,
+            'loaValidationUrlFull' => $loaValidationUrlFull,
             'csrfToken' => $request->getSession()->getCSRFToken(),
         ]);
 
@@ -1340,13 +1476,9 @@ class MultiJournalControlPanelHandler extends Handler
      */
     public function submitConfirmation($args, $request)
     {
-        if (!$request->checkCSRF()) {
-            $this->_renderAccessDenied($request, 'mjcp.error.invalidCsrf');
-            return;
-        }
-
         $rawToken = !empty($args[0]) ? trim((string) $args[0]) : trim((string) $request->getUserVar('token'));
-        $locale = $this->_resolveActiveLocale($request);
+        $enabledLangs = $this->_getEnabledAuthorFormLocales();
+        $locale = $this->_resolveActiveLocale($request, $enabledLangs['allowed']);
 
         $plugin = self::getPlugin();
         $paymentService = new PaymentService($plugin);
@@ -1360,16 +1492,25 @@ class MultiJournalControlPanelHandler extends Handler
             'testimonialConsent' => $request->getUserVar('testimonialConsent'),
             'locale' => $locale,
         ];
-        $uploadedFile = isset($_FILES['transferProof']) ? $_FILES['transferProof'] : null;
-        $clientIp = (string) $request->getRemoteAddr();
 
-        $result = $paymentService->submitAuthorConfirmationForm($rawToken, $input, $uploadedFile, $clientIp);
+        $csrfValid = $request->checkCSRF();
+        if (!$csrfValid) {
+            $result = [
+                'ok' => false,
+                'errors' => [__('mjcp.authorForm.error.sessionExpired', [], $locale)],
+                'message' => __('mjcp.authorForm.error.sessionExpired', [], $locale),
+            ];
+        } else {
+            $uploadedFile = isset($_FILES['transferProof']) ? $_FILES['transferProof'] : null;
+            $clientIp = (string) $request->getRemoteAddr();
+            $result = $paymentService->submitAuthorConfirmationForm($rawToken, $input, $uploadedFile, $clientIp);
+        }
 
         $dispatcher = $request->getDispatcher();
         $contextPath = $request->getContext() ? $request->getContext()->getPath() : 'index';
 
         if ($result['ok']) {
-            $redirectUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$rawToken], ['submitted' => 1, 'lang' => $locale]);
+            $redirectUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$rawToken], ['submitted' => 1, 'uiLocale' => $locale]);
             $request->redirectUrl($redirectUrl);
             return;
         }
@@ -1378,6 +1519,8 @@ class MultiJournalControlPanelHandler extends Handler
         $resolved = $paymentService->resolveAuthorToken($rawToken, $locale);
         $this->setupTemplate($request);
         $templateMgr = TemplateManager::getManager($request);
+        $this->_registerPublicLocaleTranslator($templateMgr, $locale);
+
         $baseUrl = $request->getBaseUrl();
         $pluginUrl = $baseUrl . '/' . $plugin->getPluginPath();
 
@@ -1387,12 +1530,22 @@ class MultiJournalControlPanelHandler extends Handler
         $houseName = $this->_resolveHouseName($request);
         $customLoaValUrl = trim((string) $plugin->getSetting(0, 'loaValidationUrl'));
         $baseLoaValidationUrl = $customLoaValUrl !== '' ? $customLoaValUrl : $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'validateLoa');
+        $loaValSep = strpos($baseLoaValidationUrl, '?') !== false ? '&' : '?';
+        $loaValidationUrlFull = '';
+        if (!empty($resolved['detail']['loa']['loaNumber'])) {
+            $loaValidationUrlFull = $baseLoaValidationUrl . $loaValSep . 'loa=' . rawurlencode((string) $resolved['detail']['loa']['loaNumber']);
+        }
+
+        $confirmUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$rawToken]);
+        $confirmSep = strpos($confirmUrl, '?') !== false ? '&' : '?';
 
         $templateMgr->assign([
             'baseUrl' => $baseUrl,
             'pluginUrl' => $pluginUrl,
             'houseName' => $houseName,
             'activeLocale' => $locale,
+            'enableLangId' => $enabledLangs['enableLangId'],
+            'enableLangEn' => $enabledLangs['enableLangEn'],
             'rawToken' => $rawToken,
             'tokenValid' => !empty($resolved['isValid']),
             'tokenReason' => isset($resolved['reason']) ? $resolved['reason'] : 'invalid',
@@ -1400,10 +1553,13 @@ class MultiJournalControlPanelHandler extends Handler
             'justSubmitted' => false,
             'formErrors' => $result['errors'],
             'formInput' => $input,
-            'confirmUrl' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'confirm', [$rawToken]),
+            'confirmUrl' => $confirmUrl,
+            'confirmUrlId' => $confirmUrl . $confirmSep . 'uiLocale=id_ID',
+            'confirmUrlEn' => $confirmUrl . $confirmSep . 'uiLocale=en_US',
             'submitConfirmationUrl' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'submitConfirmation', [$rawToken]),
             'downloadLoaUrl' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadLoa', [$rawToken]),
             'baseLoaValidationUrl' => $baseLoaValidationUrl,
+            'loaValidationUrlFull' => $loaValidationUrlFull,
             'csrfToken' => $request->getSession()->getCSRFToken(),
         ]);
 
@@ -1479,7 +1635,8 @@ class MultiJournalControlPanelHandler extends Handler
     {
         $plugin = self::getPlugin();
         $paymentService = new PaymentService($plugin);
-        $locale = $this->_resolveActiveLocale($request);
+        $enabledLangs = $this->_getEnabledAuthorFormLocales();
+        $locale = $this->_resolveActiveLocale($request, $enabledLangs['allowed']);
 
         $loaNumber = !empty($args[0]) ? trim((string) $args[0]) : trim((string) $request->getUserVar('loa'));
 
@@ -1490,6 +1647,8 @@ class MultiJournalControlPanelHandler extends Handler
 
         $this->setupTemplate($request);
         $templateMgr = TemplateManager::getManager($request);
+        $this->_registerPublicLocaleTranslator($templateMgr, $locale);
+
         $dispatcher = $request->getDispatcher();
         $contextPath = $request->getContext() ? $request->getContext()->getPath() : 'index';
         $baseUrl = $request->getBaseUrl();
@@ -1499,15 +1658,21 @@ class MultiJournalControlPanelHandler extends Handler
         $templateMgr->addJavaScript('mjcpScript', $pluginUrl . '/js/multiJournalControlPanel.js');
 
         $houseName = $this->_resolveHouseName($request);
+        $validateLoaUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'validateLoa');
+        $valSep = strpos($validateLoaUrl, '?') !== false ? '&' : '?';
 
         $templateMgr->assign([
             'baseUrl' => $baseUrl,
             'pluginUrl' => $pluginUrl,
             'houseName' => $houseName,
             'activeLocale' => $locale,
+            'enableLangId' => $enabledLangs['enableLangId'],
+            'enableLangEn' => $enabledLangs['enableLangEn'],
             'loaNumber' => $loaNumber,
             'validationResult' => $validationResult,
-            'validateLoaUrl' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'validateLoa'),
+            'validateLoaUrl' => $validateLoaUrl,
+            'validateLoaUrlId' => $validateLoaUrl . $valSep . 'loa=' . rawurlencode($loaNumber) . '&uiLocale=id_ID',
+            'validateLoaUrlEn' => $validateLoaUrl . $valSep . 'loa=' . rawurlencode($loaNumber) . '&uiLocale=en_US',
         ]);
 
         $templateMgr->display($plugin->getTemplateResource('loa/detail.tpl'));
@@ -1601,6 +1766,9 @@ class MultiJournalControlPanelHandler extends Handler
         $templateMgr->addStyleSheet('mjcpStyles', $pluginUrl . '/styles/multiJournalControlPanel.css', ['contexts' => ['backend', 'frontend']]);
         $templateMgr->addJavaScript('mjcpScript', $pluginUrl . '/js/multiJournalControlPanel.js', ['contexts' => ['backend', 'frontend']]);
 
+        $dashboardUrl = $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'dashboard');
+        $querySep = strpos($dashboardUrl, '?') !== false ? '&' : '?';
+
         $templateMgr->assign([
             'baseUrl' => $baseUrl,
             'pluginUrl' => $pluginUrl,
@@ -1611,9 +1779,10 @@ class MultiJournalControlPanelHandler extends Handler
             'perms' => $perms,
             'journalsList' => $journals,
             'activeFilters' => $filters,
+            'querySep' => $querySep,
             'csrfToken' => $request->getSession()->getCSRFToken(),
             'navUrls' => [
-                'dashboard' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'dashboard'),
+                'dashboard' => $dashboardUrl,
                 'bottlenecks' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'bottlenecks'),
                 'journals' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'journals'),
                 'issues' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'issues'),
@@ -1630,6 +1799,7 @@ class MultiJournalControlPanelHandler extends Handler
                 'importPayments' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'importPayments'),
                 'uploadLoa' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'uploadLoa'),
                 'downloadProof' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadProof'),
+                'downloadHistoricalProof' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadHistoricalProof'),
                 'downloadLoa' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'downloadLoa'),
                 'generateToken' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'generateToken'),
                 'revokeToken' => $dispatcher->url($request, ROUTE_PAGE, $contextPath, 'multiJournalControlPanel', 'revokeToken'),
@@ -1643,7 +1813,7 @@ class MultiJournalControlPanelHandler extends Handler
     }
 
     /**
-     * Read common journal and period filters from the request.
+     * Read common journal, period, search, and sort filters from the request.
      * Defaults to `period = 'all'` so All Article and Published reflect all submissions since journal inception.
      *
      * @param PKPRequest $request
@@ -1654,11 +1824,13 @@ class MultiJournalControlPanelHandler extends Handler
         $ctxId = trim((string) $request->getUserVar('contextId'));
         $period = trim((string) $request->getUserVar('period'));
         $search = trim((string) $request->getUserVar('search'));
+        $sort = trim((string) $request->getUserVar('sort'));
 
         return [
             'contextId' => $ctxId !== '' ? $ctxId : 'all',
             'period' => $period !== '' ? $period : 'all',
             'search' => $search,
+            'sort' => $sort,
         ];
     }
 
@@ -1686,30 +1858,101 @@ class MultiJournalControlPanelHandler extends Handler
     }
 
     /**
+     * Read enabled languages for the public Author Confirmation Form from plugin settings.
+     *
+     * @return array {enableLangId: bool, enableLangEn: bool, allowed: string[]}
+     */
+    protected function _getEnabledAuthorFormLocales()
+    {
+        $plugin = self::getPlugin();
+        $enableId = $plugin->getSetting(0, 'enableLangId');
+        $enableEn = $plugin->getSetting(0, 'enableLangEn');
+        $idOn = $enableId === null ? true : (bool) $enableId;
+        $enOn = $enableEn === null ? true : (bool) $enableEn;
+        if (!$idOn && !$enOn) {
+            $idOn = true;
+            $enOn = true;
+        }
+        $allowed = [];
+        if ($idOn) {
+            $allowed[] = 'id_ID';
+        }
+        if ($enOn) {
+            $allowed[] = 'en_US';
+        }
+        return [
+            'enableLangId' => $idOn,
+            'enableLangEn' => $enOn,
+            'allowed' => $allowed,
+        ];
+    }
+
+    /**
+     * Register an explicit locale-aware `{translate}` Smarty function on `$templateMgr` for public pages.
+     * Bypasses OJS 3.3 `PKPLocale::getLocale()` static request caching and site `supportedLocales` filtering
+     * so authors can switch seamlessly between Indonesian and English in the same request.
+     *
+     * @param TemplateManager $templateMgr
+     * @param string $locale
+     * @return void
+     */
+    protected function _registerPublicLocaleTranslator($templateMgr, $locale)
+    {
+        $plugin = self::getPlugin();
+        $plugin->addLocaleData($locale);
+
+        if (method_exists($templateMgr, 'unregisterPlugin') && method_exists($templateMgr, 'registerPlugin')) {
+            $templateMgr->unregisterPlugin('function', 'translate');
+            $templateMgr->registerPlugin('function', 'translate', function ($params, $smarty) use ($locale) {
+                if (empty($params) || !isset($params['key'])) {
+                    return __('', [], $locale);
+                }
+                $key = $params['key'];
+                unset($params['key']);
+                if (isset($params['params']) && is_array($params['params'])) {
+                    $paramsArray = $params['params'];
+                    unset($params['params']);
+                    $params = array_merge($params, $paramsArray);
+                }
+                $translated = __($key, $params, $locale);
+                if (strpos($translated, '##') === 0) {
+                    $fallback = __($key, $params);
+                    if (strpos($fallback, '##') !== 0) {
+                        return $fallback;
+                    }
+                }
+                return $translated;
+            });
+        }
+    }
+
+    /**
      * Determine active UI locale ('en_US' or 'id_ID'), supporting `?uiLocale=...` / `?lang=...` switch.
      *
      * @param PKPRequest $request
+     * @param array|null $allowedLocales Optional subset of enabled locales
      * @return string
      */
-    protected function _resolveActiveLocale($request)
+    protected function _resolveActiveLocale($request, $allowedLocales = null)
     {
         $plugin = self::getPlugin();
+        $validLocales = is_array($allowedLocales) && !empty($allowedLocales) ? $allowedLocales : ['id_ID', 'en_US'];
+
         $reqLang = trim((string) $request->getUserVar('uiLocale'));
         if ($reqLang === '') {
             $reqLang = trim((string) $request->getUserVar('lang'));
         }
-        if (in_array($reqLang, ['id_ID', 'en_US'], true)) {
+        if (in_array($reqLang, $validLocales, true)) {
             $session = $request->getSession();
             if ($session) {
                 $session->setSessionVar('mjcpLocale', $reqLang);
-                $session->setSessionVar('currentLocale', $reqLang);
             }
             $plugin->addLocaleData($reqLang);
             return $reqLang;
         }
 
         $session = $request->getSession();
-        if ($session && in_array($session->getSessionVar('mjcpLocale'), ['id_ID', 'en_US'], true)) {
+        if ($session && in_array($session->getSessionVar('mjcpLocale'), $validLocales, true)) {
             $loc = (string) $session->getSessionVar('mjcpLocale');
             $plugin->addLocaleData($loc);
             return $loc;
@@ -1717,6 +1960,9 @@ class MultiJournalControlPanelHandler extends Handler
 
         $ojsLocale = AppLocale::getLocale();
         $loc = strpos((string) $ojsLocale, 'id') === 0 ? 'id_ID' : 'en_US';
+        if (!in_array($loc, $validLocales, true)) {
+            $loc = $validLocales[0];
+        }
         $plugin->addLocaleData($loc);
         return $loc;
     }
@@ -1755,7 +2001,8 @@ class MultiJournalControlPanelHandler extends Handler
     }
 
     /**
-     * Render 403 Access Denied page.
+     * Render 403 Access Denied page compatible with OJS 3.3 `frontend/pages/error.tpl`
+     * (passes raw locale keys for `pageTitle`, `errorMsg`, and `backLinkLabel`).
      *
      * @param PKPRequest $request
      * @param string $localeKey
@@ -1766,10 +2013,11 @@ class MultiJournalControlPanelHandler extends Handler
         if (!headers_sent()) {
             header('HTTP/1.0 403 Forbidden');
         }
+        $this->_isBackendPage = false;
         $this->setupTemplate($request);
         $templateMgr = TemplateManager::getManager($request);
         $templateMgr->assign([
-            'pageTitle' => __('common.error'),
+            'pageTitle' => 'common.error',
             'errorMsg' => $localeKey,
             'backLink' => $request->getBaseUrl(),
             'backLinkLabel' => 'common.back',
